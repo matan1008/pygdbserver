@@ -225,3 +225,38 @@ class Target:
         :return: Returns 0 on success, -1 on failure and 1 on unsupported.
         """
         return 1
+
+    @abstractmethod
+    def stopped_by_sw_breakpoint(self):
+        """
+        Returns true if the target stopped because it executed a software
+        breakpoint instruction, false otherwise.
+        :return: True if stopped by sw breakpoint.
+        """
+        return False
+
+    @abstractmethod
+    def supports_stopped_by_sw_breakpoint(self):
+        """
+        Returns true if the target knows whether a trap was caused by a
+        SW breakpoint triggering.
+        :return: True if supports trap that caused by sw breakpoint.
+        """
+        return False
+
+    @abstractmethod
+    def stopped_by_hw_breakpoint(self):
+        """
+        Returns true if the target stopped for a hardware breakpoint.
+        :return: True if stopped by hw breakpoint.
+        """
+        return False
+
+    @abstractmethod
+    def supports_stopped_by_hw_breakpoint(self):
+        """
+        Returns true if the target knows whether a trap was caused by a
+        HW breakpoint triggering.
+        :return: True if supports trap that caused by hw breakpoint.
+        """
+        return False
