@@ -133,3 +133,27 @@ class Target:
         Undo the effects of prepare_to_access_memory.
         """
         pass
+
+    @abstractmethod
+    def read_memory(self, memaddr, myaddr, len):
+        """
+        Read memory from the inferior process.
+        This should generally be called through read_inferior_memory, which handles breakpoint shadowing.
+        :param memaddr: Address to read from.
+        :param myaddr: Buffer to read into.
+        :param len: Number of bytes to read.
+        :return: Returns 0 on success and errno on failure.
+        """
+        return 1
+
+    @abstractmethod
+    def write_memory(self, memaddr, myaddr, len):
+        """
+        Write memory to the inferior process.
+        This should generally be called through write_inferior_memory, which handles breakpoint shadowing.
+        :param memaddr: Address to write to.
+        :param myaddr: Buffer to write.
+        :param len: Number of bytes to write.
+        :return: Returns 0 on success and errno on failure.
+        """
+        return 1
