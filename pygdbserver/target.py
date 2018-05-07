@@ -103,3 +103,33 @@ class Target:
         :param regno: If regno is -1, fetch all registers; otherwise, fetch at least regno.
         """
         pass
+
+    @abstractmethod
+    def store_registers(self, regcache, regno):
+        """
+        Store registers from the inferior process.
+        :param regcache: Registers cache.
+        :param regno: If regno is -1, store all registers; otherwise, store at least regno.
+        """
+        pass
+
+    @abstractmethod
+    def prepare_to_access_memory(self):
+        """
+        Prepare to read or write memory from the inferior process.
+        Targets use this to do what is necessary to get the state of the
+        inferior such that it is possible to access memory.
+
+        This should generally only be called from client facing routines,
+        such as gdb_read_memory/gdb_write_memory, or the GDB breakpoint
+        insertion routine.
+        :return: Returns 0 on success and errno on failure.
+        """
+        return 1
+
+    @abstractmethod
+    def done_accessing_memory(self):
+        """
+        Undo the effects of prepare_to_access_memory.
+        """
+        pass
