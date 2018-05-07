@@ -201,3 +201,27 @@ class Target:
         :return: True or False
         """
         return False
+
+    @abstractmethod
+    def insert_point(self, type_, addr, size, bp):
+        """
+        Insert a break or watchpoint.
+        :param type_: Point's type.
+        :param addr: Point's addr.
+        :param size: Point's size.
+        :param bp: Point's info.
+        :return: Returns 0 on success, -1 on failure and 1 on unsupported.
+        """
+        return 1
+
+    @abstractmethod
+    def remove_point(self, type_, addr, size, bp):
+        """
+        Remove a break or watchpoint.
+        :param type_: Point's type.
+        :param addr: Point's addr.
+        :param size: Point's size.
+        :param bp: Point's info.
+        :return: Returns 0 on success, -1 on failure and 1 on unsupported.
+        """
+        return 1
