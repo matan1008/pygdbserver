@@ -20,3 +20,21 @@ class Target:
         Do additional setup after a new process is created, including exec-wrapper completion.
         """
         pass
+
+    @abstractmethod
+    def attach(self, pid):
+        """
+        Attach to a running process.
+        :param pid: The process ID to attach to, specified by the user or a higher layer.
+        :return: Returns -1 if attaching is unsupported, 0 on success, and calls error() otherwise.
+        """
+        return -1
+
+    @abstractmethod
+    def kill(self, pid):
+        """
+        Kill inferior PID.
+        :param pid: The process ID to kill.
+        :return: Return -1 on failure, and 0 on success.
+        """
+        return -1
