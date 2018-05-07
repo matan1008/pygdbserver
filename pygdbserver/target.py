@@ -38,3 +38,20 @@ class Target:
         :return: Return -1 on failure, and 0 on success.
         """
         return -1
+
+    @abstractmethod
+    def detach(self, pid):
+        """
+        Detach from inferior PID.
+        :param pid: The process ID to detach from.
+        :return: Return -1 on failure, and 0 on success.
+        """
+        return -1
+
+    @abstractmethod
+    def mourn(self, proc):
+        """
+        The inferior process has died. Do what is right.
+        :param proc: Process to mourn on.
+        """
+        pass
