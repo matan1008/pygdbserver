@@ -55,3 +55,20 @@ class Target:
         :param proc: Process to mourn on.
         """
         pass
+
+    @abstractmethod
+    def join(self, pid):
+        """
+        Wait for inferior PID to exit.
+        :param pid: The process ID to wait for.
+        """
+        pass
+
+    @abstractmethod
+    def thread_alive(self, pid):
+        """
+        Return true if the thread with process ID PID is alive.
+        :param pid: The process ID.
+        :return: Whether the process ia alive or not.
+        """
+        return False
