@@ -157,3 +157,22 @@ class Target:
         :return: Returns 0 on success and errno on failure.
         """
         return 1
+
+    @abstractmethod
+    def look_up_symbols(self):
+        """
+        Query GDB for the values of any symbols we're interested in.
+        This function is called whenever we receive a "qSymbols::"
+        query, which corresponds to every time more symbols (might)
+        become available.  NULL if we aren't interested in any
+        symbols.
+        """
+        pass
+
+    @abstractmethod
+    def request_interrupt(self):
+        """
+        Send an interrupt request to the inferior process,
+        however is appropriate.
+        """
+        pass
