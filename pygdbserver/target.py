@@ -176,3 +176,28 @@ class Target:
         however is appropriate.
         """
         pass
+
+    @abstractmethod
+    def read_auxv(self, offset, myaddr, len):
+        """
+        Read auxiliary vector data from the inferior process.
+        :param offset: Offset read from.
+        :param myaddr: Buffer to read into.
+        :param len: Number of bytes to read.
+        :return: Returns 0 on success and errno on failure.
+        """
+        return 1
+
+    @abstractmethod
+    def supports_z_point_type(self, z_type):
+        """
+        Returns true if GDB Z breakpoint type TYPE is supported, false otherwise.
+        :param z_type: The type is coded as follows:
+            '0' - software-breakpoint
+            '1' - hardware-breakpoint
+            '2' - write watchpoint
+            '3' - read watchpoint
+            '4' - access watchpoint
+        :return: True or False
+        """
+        return False
