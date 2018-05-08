@@ -276,3 +276,22 @@ class Target:
         :return: True is stopped by watchpoint.
         """
         return False
+
+    @abstractmethod
+    def stopped_data_address(self):
+        """
+        Returns the address associated with the watchpoint that hit, if any; returns 0 otherwise.
+        :return: Address associated with the watchpoint that hit.
+        """
+        return 0
+
+    @abstractmethod
+    def read_offsets(self, text, data):
+        """
+        Reports the text, data offsets of the executable.
+        This is needed for uclinux where the executable is relocated during load time.
+        :param text: Executable's text.
+        :param data: Executable's data.
+        :return: True on success, False otherwise.
+        """
+        return False
