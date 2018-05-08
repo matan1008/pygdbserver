@@ -50,3 +50,10 @@ class TargetReadMemoryError(TargetError):
 
     def __init__(self, errno):
         self.errno = errno
+
+
+class TargetWriteMemoryError(TargetError):
+    """ Raise when writing memory fails. """
+
+    def __init__(self, errno):
+        self.errno = errno

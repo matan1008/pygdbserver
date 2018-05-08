@@ -159,12 +159,12 @@ class Target:
         """
         Write memory to the inferior process.
         This should generally be called through write_inferior_memory, which handles breakpoint shadowing.
-        :param memaddr: Address to write to.
-        :param myaddr: Buffer to write.
-        :param len: Number of bytes to write.
-        :return: Returns 0 on success and errno on failure.
+        :param int memaddr: Address to write to.
+        :param str myaddr: Buffer to write.
+        :param int len: Number of bytes to write.
+        :raises TargetWriteMemoryError: Raised with errno on failure.
         """
-        return 1
+        raise TargetWriteMemoryError(0)
 
     @abstractmethod
     def look_up_symbols(self):
@@ -172,7 +172,7 @@ class Target:
         Query GDB for the values of any symbols we're interested in.
         This function is called whenever we receive a "qSymbols::"
         query, which corresponds to every time more symbols (might)
-        become available.  NULL if we aren't interested in any
+        become available. NULL if we aren't interested in any
         symbols.
         """
         pass
@@ -186,27 +186,29 @@ class Target:
         pass
 
     @abstractmethod
-    def read_auxv(self, offset, myaddr, len):
+    def read_auxv(self, offset, len):
         """
         Read auxiliary vector data from the inferior process.
-        :param offset: Offset read from.
-        :param myaddr: Buffer to read into.
-        :param len: Number of bytes to read.
-        :return: Returns 0 on success and errno on failure.
+        :param int offset: Offset read from.
+        :param int len: Number of bytes to read.
+        :return: Data from memory.
+        :rtype: str
+        :raises TargetReadMemoryError: Raised with errno on failure.
         """
-        return 1
+        raise TargetReadMemoryError(0)
 
     @abstractmethod
     def supports_z_point_type(self, z_type):
         """
-        Returns true if GDB Z breakpoint type TYPE is supported, false otherwise.
-        :param z_type: The type is coded as follows:
+        Returns true if GDB Z breakpoint type z_type is supported, false otherwise.
+        :param str z_type: The type is coded as follows:
             '0' - software-breakpoint
             '1' - hardware-breakpoint
             '2' - write watchpoint
             '3' - read watchpoint
             '4' - access watchpoint
-        :return: True or False
+        :return: If GDB Z breakpoint type is supported.
+        :rtype: bool
         """
         return False
 
