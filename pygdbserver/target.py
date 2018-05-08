@@ -38,25 +38,25 @@ class Target:
     def kill(self, pid):
         """
         Kill inferior PID.
-        :param pid: The process ID to kill.
-        :return: Return -1 on failure, and 0 on success.
+        :param int pid: The process ID to kill.
+        :raises TargetKillError: If killing fails.
         """
-        return -1
+        raise TargetKillError()
 
     @abstractmethod
     def detach(self, pid):
         """
         Detach from inferior PID.
-        :param pid: The process ID to detach from.
-        :return: Return -1 on failure, and 0 on success.
+        :param int pid: The process ID to detach from.
+        :raises TargetDetachError: If detaching fails.
         """
-        return -1
+        raise TargetDetachError()
 
     @abstractmethod
     def mourn(self, proc):
         """
         The inferior process has died. Do what is right.
-        :param proc: Process to mourn on.
+        :param ProcessInfo proc: Process to mourn on.
         """
         pass
 
@@ -64,7 +64,7 @@ class Target:
     def join(self, pid):
         """
         Wait for inferior PID to exit.
-        :param pid: The process ID to wait for.
+        :param int pid: The process ID to wait for.
         """
         pass
 
@@ -72,8 +72,9 @@ class Target:
     def thread_alive(self, pid):
         """
         Return true iff the thread with process ID PID is alive.
-        :param pid: The process ID.
+        :param Ptid pid: The process ID.
         :return: Whether the process is alive or not.
+        :rtype: bool
         """
         return False
 
@@ -81,7 +82,7 @@ class Target:
     def resume(self, resume_info):
         """
         Resume the inferior process.
-        :param resume_info: List of resume actions.
+        :param list resume_info: List of resume actions.
         """
         pass
 
@@ -89,15 +90,17 @@ class Target:
     def wait(self, ptid, status, options):
         """
         Wait for the inferior process or thread to change state. Store status through argument status.
-        :param ptid: ptid = -1 to wait for any pid to do something,
+        :param Ptid ptid: ptid = -1 to wait for any pid to do something,
         PTID(pid,0,0) to wait for any thread of process pid to do something.
-        :param status: For storing status.
-        :param options: A bit set of options defined as TARGET_W*.
+        :param TargetWaitstatus status: For storing status.
+        :param int options: A bit set of options defined as TARGET_W*.
         If options contains TARGET_WNOHANG and there's no child stop to report,
         return is null_ptid/TARGET_WAITKIND_IGNORE.
-        :return: Return ptid of child, or -1 in case of error.
+        :return: Return ptid of child.
+        :rtype: Ptid
+        :raises TargetWaitError: If waiting fails.
         """
-        return None
+        raise TargetWaitError()
 
     @abstractmethod
     def fetch_registers(self, regcache, regno):
