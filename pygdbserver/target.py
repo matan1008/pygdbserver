@@ -216,25 +216,27 @@ class Target:
     def insert_point(self, type_, addr, size, bp):
         """
         Insert a break or watchpoint.
-        :param type_: Point's type.
-        :param addr: Point's addr.
-        :param size: Point's size.
-        :param bp: Point's info.
-        :return: Returns 0 on success, -1 on failure and 1 on unsupported.
+        :param RawBkptType type_: Point's type.
+        :param int addr: Point's addr.
+        :param int size: Point's size.
+        :param RawBreakpoint bp: Point's info.
+        :raises TargetInsertPointError: On inserting failure.
+        :raises TargetInsertPointNotSupported: If inserting is unsupported.
         """
-        return 1
+        raise TargetInsertPointNotSupported()
 
     @abstractmethod
     def remove_point(self, type_, addr, size, bp):
         """
         Remove a break or watchpoint.
-        :param type_: Point's type.
-        :param addr: Point's addr.
-        :param size: Point's size.
-        :param bp: Point's info.
-        :return: Returns 0 on success, -1 on failure and 1 on unsupported.
+        :param RawBkptType type_: Point's type.
+        :param int addr: Point's addr.
+        :param int size: Point's size.
+        :param RawBreakpoint bp: Point's info.
+        :raises TargetRemovePointError: On removing failure.
+        :raises TargetRemovePointNotSupported: If removing is unsupported.
         """
-        return 1
+        raise TargetRemovePointNotSupported()
 
     @abstractmethod
     def stopped_by_sw_breakpoint(self):
@@ -242,6 +244,7 @@ class Target:
         Returns true if the target stopped because it executed a software
         breakpoint instruction, false otherwise.
         :return: True if stopped by sw breakpoint.
+        :rtype: bool
         """
         return False
 
@@ -251,6 +254,7 @@ class Target:
         Returns true if the target knows whether a trap was caused by a
         SW breakpoint triggering.
         :return: True if supports trap that caused by sw breakpoint.
+        :rtype: bool
         """
         return False
 
@@ -259,6 +263,7 @@ class Target:
         """
         Returns true if the target stopped for a hardware breakpoint.
         :return: True if stopped by hw breakpoint.
+        :rtype: bool
         """
         return False
 
@@ -268,6 +273,7 @@ class Target:
         Returns true if the target knows whether a trap was caused by a
         HW breakpoint triggering.
         :return: True if supports trap that caused by hw breakpoint.
+        :rtype: bool
         """
         return False
 
@@ -276,6 +282,7 @@ class Target:
         """
         Returns true if the target can do hardware single step.
         :return: True is supports hardware single step.
+        :rtype: bool
         """
         return False
 
@@ -284,6 +291,7 @@ class Target:
         """
         Returns true if target was stopped due to a watchpoint hit, false otherwise.
         :return: True is stopped by watchpoint.
+        :rtype: bool
         """
         return False
 
@@ -292,6 +300,7 @@ class Target:
         """
         Returns the address associated with the watchpoint that hit, if any; returns 0 otherwise.
         :return: Address associated with the watchpoint that hit.
+        :rtype: bool
         """
         return 0
 

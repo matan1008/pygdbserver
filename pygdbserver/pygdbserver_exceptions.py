@@ -57,3 +57,23 @@ class TargetWriteMemoryError(TargetError):
 
     def __init__(self, errno):
         self.errno = errno
+
+
+class TargetInsertPointError(TargetError):
+    """ Raise when inserting a break or watchpoint fails. """
+    pass
+
+
+class TargetInsertPointNotSupported(TargetError):
+    """ Raise when inserting a break or watchpoint is not supported. """
+    pass
+
+
+class TargetRemovePointError(TargetError):
+    """ Raise when removing a break or watchpoint fails. """
+    pass
+
+
+class TargetRemovePointNotSupported(TargetError):
+    """ Raise when removing a break or watchpoint is not supported. """
+    pass
