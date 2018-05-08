@@ -295,3 +295,33 @@ class Target:
         :return: True on success, False otherwise.
         """
         return False
+
+    @abstractmethod
+    def get_tls_address(self, thread, offset, load_module, address):
+        """
+        Fetch the address associated with a specific thread local storage
+        area, determined by the specified thread, offset, and load_module.
+        Stores it in address and returns zero on success; otherwise returns
+        an error code. A return value of -1 means this system does not
+        support the operation.
+        :param thread: Address's thread.
+        :param offset: Address's offset.
+        :param load_module: Address's load_module.
+        :param address: Thread's local storage address.
+        :return: Zero on success, otherwise returns an error code.
+        A return value of -1 means this system does not support the operation.
+        """
+        return -1
+
+    @abstractmethod
+    def qxfer_spu(self, annex, readbuf, writebuf, offset, len):
+        """
+        Read/Write from/to spufs using qXfer packets.
+        :param annex: Memory's annex.
+        :param readbuf: Reading buffer.
+        :param writebuf: Writing buffer.
+        :param offset: Reading / writing offset.
+        :param len: Reading / writing size.
+        :return: Returns 0 on success and errno on failure.
+        """
+        return 1
