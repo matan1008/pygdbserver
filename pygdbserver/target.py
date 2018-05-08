@@ -106,8 +106,8 @@ class Target:
     def fetch_registers(self, regcache, regno):
         """
         Fetch registers from the inferior process.
-        :param regcache: Registers cache.
-        :param regno: If regno is -1, fetch all registers; otherwise, fetch at least regno.
+        :param Regcache regcache: Registers cache.
+        :param int regno: If regno is -1, fetch all registers; otherwise, fetch at least regno.
         """
         pass
 
@@ -115,8 +115,8 @@ class Target:
     def store_registers(self, regcache, regno):
         """
         Store registers from the inferior process.
-        :param regcache: Registers cache.
-        :param regno: If regno is -1, store all registers; otherwise, store at least regno.
+        :param Regcache regcache: Registers cache.
+        :param int regno: If regno is -1, store all registers; otherwise, store at least regno.
         """
         pass
 
@@ -130,9 +130,9 @@ class Target:
         This should generally only be called from client facing routines,
         such as gdb_read_memory/gdb_write_memory, or the GDB breakpoint
         insertion routine.
-        :return: Returns 0 on success and errno on failure.
+        :raises TargetPrepareToAccessMemoryError: Raised with errno on failure.
         """
-        return 1
+        raise TargetPrepareToAccessMemoryError(0)
 
     @abstractmethod
     def done_accessing_memory(self):
@@ -142,16 +142,17 @@ class Target:
         pass
 
     @abstractmethod
-    def read_memory(self, memaddr, myaddr, len):
+    def read_memory(self, memaddr, len):
         """
         Read memory from the inferior process.
         This should generally be called through read_inferior_memory, which handles breakpoint shadowing.
-        :param memaddr: Address to read from.
-        :param myaddr: Buffer to read into.
-        :param len: Number of bytes to read.
-        :return: Returns 0 on success and errno on failure.
+        :param int memaddr: Address to read from.
+        :param int len: Number of bytes to read.
+        :return: Data from memory.
+        :rtype: str
+        :raises TargetReadMemoryError: Raised with errno on failure.
         """
-        return 1
+        raise TargetReadMemoryError(0)
 
     @abstractmethod
     def write_memory(self, memaddr, myaddr, len):

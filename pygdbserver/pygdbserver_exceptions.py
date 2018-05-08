@@ -36,3 +36,17 @@ class TargetDetachError(TargetError):
 class TargetWaitError(TargetError):
     """ Raise when waiting to a process fails. """
     pass
+
+
+class TargetPrepareToAccessMemoryError(TargetError):
+    """ Raise when preparing to access memory fails. """
+
+    def __init__(self, errno):
+        self.errno = errno
+
+
+class TargetReadMemoryError(TargetError):
+    """ Raise when reading memory fails. """
+
+    def __init__(self, errno):
+        self.errno = errno
