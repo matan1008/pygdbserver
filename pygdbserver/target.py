@@ -1,4 +1,5 @@
 from abc import ABCMeta, abstractmethod
+from pygdbserver.pygdbserver_exceptions import *
 
 
 class Target:
@@ -10,9 +11,10 @@ class Target:
         Start a new process and registers the new process with the process list.
         :param program: A path to the program to execute.
         :param args: An array of arguments, to be passed to the inferior as ``argv''.
-        :return: The new PID on success, -1 on failure.
+        :return: The new PID on success.
+        :raises TargetCreatingInferiorError: If creating process failed.
         """
-        return -1
+        raise TargetCreatingInferiorError()
 
     @abstractmethod
     def post_create_inferior(self):
