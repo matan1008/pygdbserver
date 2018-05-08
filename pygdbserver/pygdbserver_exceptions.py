@@ -77,3 +77,8 @@ class TargetRemovePointError(TargetError):
 class TargetRemovePointNotSupported(TargetError):
     """ Raise when removing a break or watchpoint is not supported. """
     pass
+
+
+class TargetReadOffsetsError(TargetError):
+    """ Raise when reading text and data offsets fails. """
+    pass

@@ -300,20 +300,20 @@ class Target:
         """
         Returns the address associated with the watchpoint that hit, if any; returns 0 otherwise.
         :return: Address associated with the watchpoint that hit.
-        :rtype: bool
+        :rtype: int
         """
         return 0
 
     @abstractmethod
-    def read_offsets(self, text, data):
+    def read_offsets(self):
         """
         Reports the text, data offsets of the executable.
         This is needed for uclinux where the executable is relocated during load time.
-        :param text: Executable's text.
-        :param data: Executable's data.
-        :return: True on success, False otherwise.
+        :return: A tuple of executable's text and executable's data, (text, data).
+        :rtype: tuple
+        :raises TargetReadOffsetsError: On reading failure.
         """
-        return False
+        raise TargetReadOffsetsError()
 
     @abstractmethod
     def get_tls_address(self, thread, offset, load_module, address):
