@@ -260,3 +260,19 @@ class Target:
         :return: True if supports trap that caused by hw breakpoint.
         """
         return False
+
+    @abstractmethod
+    def supports_hardware_single_step(self):
+        """
+        Returns true if the target can do hardware single step.
+        :return: True is supports hardware single step.
+        """
+        return False
+
+    @abstractmethod
+    def stopped_by_watchpoint(self):
+        """
+        Returns true if target was stopped due to a watchpoint hit, false otherwise.
+        :return: True is stopped by watchpoint.
+        """
+        return False
