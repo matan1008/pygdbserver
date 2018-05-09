@@ -108,3 +108,10 @@ class TargetQxferOsdataError(TargetError):
 
     def __init__(self, errno):
         self.errno = errno
+
+
+class TargetQxferSiginfoError(TargetError):
+    """ Raise when reading / writing extra signal info using qXfer packets fails. """
+
+    def __init__(self, errno):
+        self.errno = errno

@@ -366,3 +366,26 @@ class Target:
         :raises TargetQxferOsdataError: On reading / writing error.
         """
         raise TargetQxferOsdataError(0)
+
+    @abstractmethod
+    def qxfer_siginfo(self, annex, writebuf, offset, len):
+        """
+        Read/Write extra signal info.
+        :param str annex: Memory's annex, of the form id/name.
+        :param str writebuf: Writing buffer.
+        :param int offset: Reading / writing offset.
+        :param int len: Reading / writing size.
+        :return: Returns reading buffer on reading, undefined on writing.
+        :rtype: str
+        :raises TargetQxferSiginfoError: On reading / writing error.
+        """
+        raise TargetQxferSiginfoError(0)
+
+    @abstractmethod
+    def supports_non_stop(self):
+        """
+        Returns true if target supports non stop mode, false otherwise.
+        :return: If target supports non stop
+        :rtype: bool
+        """
+        return False
