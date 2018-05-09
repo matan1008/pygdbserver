@@ -115,3 +115,8 @@ class TargetQxferSiginfoError(TargetError):
 
     def __init__(self, errno):
         self.errno = errno
+
+
+class TargetStartNonStopError(TargetError):
+    """ Raise when switching stop mode fails. """
+    pass

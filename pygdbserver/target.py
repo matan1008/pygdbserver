@@ -389,3 +389,22 @@ class Target:
         :rtype: bool
         """
         return False
+
+    @abstractmethod
+    def async(self, enable):
+        """
+        Enables async target events.
+        :param bool enable: True for enabling async target events, False for disabling.
+        :return: Returns the previous enable state.
+        :rtype: bool
+        """
+        return False
+
+    @abstractmethod
+    def start_non_stop(self, non_stop):
+        """
+        Switch to non-stop or all-stop mode.
+        :param bool non_stop: True for switching to non-stop mode, False for all-stop.
+        :raises TargetStartNonStopError: On switching error.
+        """
+        raise TargetStartNonStopError()
