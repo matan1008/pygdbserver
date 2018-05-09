@@ -281,7 +281,7 @@ class Target:
     def supports_hardware_single_step(self):
         """
         Returns true if the target can do hardware single step.
-        :return: True is supports hardware single step.
+        :return: True if supports hardware single step.
         :rtype: bool
         """
         return False
@@ -290,7 +290,7 @@ class Target:
     def stopped_by_watchpoint(self):
         """
         Returns true if target was stopped due to a watchpoint hit, false otherwise.
-        :return: True is stopped by watchpoint.
+        :return: True if stopped by watchpoint.
         :rtype: bool
         """
         return False
@@ -408,3 +408,21 @@ class Target:
         :raises TargetStartNonStopError: On switching error.
         """
         raise TargetStartNonStopError()
+
+    @abstractmethod
+    def supports_multi_process(self):
+        """
+        Returns true if the target supports multi-process debugging.
+        :return: True if supports multi-process debugging.
+        :rtype: bool
+        """
+        return False
+    
+    @abstractmethod
+    def supports_fork_events(self):
+        """
+        Returns true if fork events are supported.
+        :return: True if supports fork events.
+        :rtype: bool
+        """
+        return False
