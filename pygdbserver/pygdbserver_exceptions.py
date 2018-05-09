@@ -82,3 +82,22 @@ class TargetRemovePointNotSupported(TargetError):
 class TargetReadOffsetsError(TargetError):
     """ Raise when reading text and data offsets fails. """
     pass
+
+
+class TargetGetTlsAddressError(TargetError):
+    """ Raise when getting tls address fails. """
+
+    def __init__(self, error_code):
+        self.error_code = error_code
+
+
+class TargetGetTlsAddressNotSupported(TargetError):
+    """ Raise when getting tls address is not supported. """
+    pass
+
+
+class TargetQxferSpuError(TargetError):
+    """ Raise when reading / writing using qXfer packets fails. """
+
+    def __init__(self, errno):
+        self.errno = errno

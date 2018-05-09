@@ -310,37 +310,36 @@ class Target:
         Reports the text, data offsets of the executable.
         This is needed for uclinux where the executable is relocated during load time.
         :return: A tuple of executable's text and executable's data, (text, data).
-        :rtype: tuple
+        :rtype: tuple(int, int)
         :raises TargetReadOffsetsError: On reading failure.
         """
         raise TargetReadOffsetsError()
 
     @abstractmethod
-    def get_tls_address(self, thread, offset, load_module, address):
+    def get_tls_address(self, thread, offset, load_module):
         """
         Fetch the address associated with a specific thread local storage
         area, determined by the specified thread, offset, and load_module.
-        Stores it in address and returns zero on success; otherwise returns
-        an error code. A return value of -1 means this system does not
-        support the operation.
         :param thread: Address's thread.
         :param offset: Address's offset.
         :param load_module: Address's load_module.
-        :param address: Thread's local storage address.
-        :return: Zero on success, otherwise returns an error code.
-        A return value of -1 means this system does not support the operation.
+        :return: Thread's local storage address.
+        :rtype: int
+        :raises TargetGetTlsAddressError: Raised with error code on failure.
+        :raises TargetGetTlsAddressNotSupported: If fetching the address is unsupported.
         """
-        return -1
+        raise TargetGetTlsAddressNotSupported()
 
     @abstractmethod
-    def qxfer_spu(self, annex, readbuf, writebuf, offset, len):
+    def qxfer_spu(self, annex, writebuf, offset, len):
         """
         Read/Write from/to spufs using qXfer packets.
-        :param annex: Memory's annex.
-        :param readbuf: Reading buffer.
-        :param writebuf: Writing buffer.
-        :param offset: Reading / writing offset.
-        :param len: Reading / writing size.
-        :return: Returns 0 on success and errno on failure.
+        :param str annex: Memory's annex, of the form id/name.
+        :param str writebuf: Writing buffer.
+        :param int offset: Reading / writing offset.
+        :param int len: Reading / writing size.
+        :return: Returns reading buffer on reading, undefined on writing.
+        :rtype: str
+        :raises TargetQxferSpuError: On reading / writing error.
         """
-        return 1
+        raise TargetQxferSpuError(0)
