@@ -444,3 +444,20 @@ class Target:
         :rtype: bool
         """
         return False
+
+    @abstractmethod
+    def handle_new_gdb_connection(self):
+        """
+        Allows target to re-initialize connection-specific settings.
+        """
+        pass
+
+    @abstractmethod
+    def handle_monitor_command(self, command=None):
+        """
+        If not None, target-specific routine to process monitor command.
+        :param str command: Monitor command.
+        :return: True if handled, or False to perform default processing.
+        :rtype: bool
+        """
+        return False
