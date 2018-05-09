@@ -417,12 +417,30 @@ class Target:
         :rtype: bool
         """
         return False
-    
+
     @abstractmethod
     def supports_fork_events(self):
         """
         Returns true if fork events are supported.
         :return: True if supports fork events.
+        :rtype: bool
+        """
+        return False
+
+    @abstractmethod
+    def supports_vfork_events(self):
+        """
+        Returns true if vfork events are supported.
+        :return: True if supports vfork events.
+        :rtype: bool
+        """
+        return False
+
+    @abstractmethod
+    def supports_exec_events(self):
+        """
+        Returns true if exec events are supported.
+        :return: True if supports exec events.
         :rtype: bool
         """
         return False
