@@ -343,3 +343,26 @@ class Target:
         :raises TargetQxferSpuError: On reading / writing error.
         """
         raise TargetQxferSpuError(0)
+
+    @abstractmethod
+    def hostio_last_error(self):
+        """
+        Return an hostio error packet representing the last hostio.
+        :return: Last hostio.
+        :rtype: str
+        """
+        return ""
+
+    @abstractmethod
+    def qxfer_osdata(self, annex, writebuf, offset, len):
+        """
+        Read/Write OS data using qXfer packets.
+        :param str annex: Memory's annex, of the form id/name.
+        :param str writebuf: Writing buffer.
+        :param int offset: Reading / writing offset.
+        :param int len: Reading / writing size.
+        :return: Returns reading buffer on reading, undefined on writing.
+        :rtype: str
+        :raises TargetQxferOsdataError: On reading / writing error.
+        """
+        raise TargetQxferOsdataError(0)

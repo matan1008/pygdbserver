@@ -97,7 +97,14 @@ class TargetGetTlsAddressNotSupported(TargetError):
 
 
 class TargetQxferSpuError(TargetError):
-    """ Raise when reading / writing using qXfer packets fails. """
+    """ Raise when reading / writing spufs using qXfer packets fails. """
+
+    def __init__(self, errno):
+        self.errno = errno
+
+
+class TargetQxferOsdataError(TargetError):
+    """ Raise when reading / writing OS data using qXfer packets fails. """
 
     def __init__(self, errno):
         self.errno = errno
