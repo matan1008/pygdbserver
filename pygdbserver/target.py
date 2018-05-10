@@ -563,3 +563,34 @@ class Target:
         :param bool unfreeze: Opposite of `pause_all` freeze param
         """
         pass
+
+    @abstractmethod
+    def stabilize_threads(self):
+        """
+        Stabilize all threads. That is, force them out of jump pads.
+        """
+        pass
+
+    @abstractmethod
+    def install_fast_tracepoint_jump_pad(self, tpoint, tpaddr, collector, lockaddr, orig_size, jump_entry,
+                                         jjump_pad_insn):
+        """
+        Install a fast tracepoint jump pad.
+        :param int tpoint: The address of the tracepoint internal object as used by the IPA agent.
+        :param int tpaddr: The address of tracepoint.
+        :param int collector: Address of the function the jump pad redirects to.
+        :param int lockaddr: The address of the jump pad lock object.
+        :param int orig_size: The size in bytes of the instruction at `tpaddr`.
+        :param int jump_entry: Points to the address of the jump pad entry.
+        :param str jjump_pad_insn: A buffer containing a copy of the instruction at `tpaddr`.
+        :return: A tuple from the format:
+        (jump_entry, trampoline, trampoline_size, adjusted_insn_addr, adjusted_insn_addr_end), where:
+            - *jump_entry*: The address past the end of the created jump pad.
+            - *trampoline*: If a trampoline is created by the function, trampoline's address, else -1.
+            - *trampoline_size*: If a trampoline is created by the function, trampoline's size, else -1.
+            - *adjusted_insn_addr*: Start of address range where the instruction at `tpaddr` was relocated to.
+            - *adjusted_insn_addr_end*: End of address range where the instruction at `tpaddr` was relocated to.
+        :rtype: tuple(int, int, int, int, int)
+        :raises TargetInstallFastTracepointJumpPadError: Raised with error message in err if an error occurs
+        """
+        raise TargetInstallFastTracepointJumpPadError("")

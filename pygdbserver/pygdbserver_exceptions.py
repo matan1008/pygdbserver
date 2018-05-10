@@ -139,3 +139,10 @@ class TargetGetTibAddressError(TargetError):
 
     def __init__(self, error_code):
         self.error_code = error_code
+
+
+class TargetInstallFastTracepointJumpPadError(TargetError):
+    """ Raise when installing a fast tracepoint jump pad fails. """
+
+    def __init__(self, err):
+        self.err = err
