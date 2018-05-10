@@ -502,3 +502,22 @@ class Target:
         :rtype: bool
         """
         return False
+
+    @abstractmethod
+    def read_pc(self, regcache):
+        """
+        Read PC from regcache.
+        :param Regcache regcache: Regcache to read from.
+        :return: PC.
+        :rtype: int
+        """
+        return 0
+
+    @abstractmethod
+    def write_pc(self, regcache, pc):
+        """
+        Write pc to regcache.
+        :param Regcache regcache: Regcache to write pc to.
+        :param int pc: pc to write.
+        """
+        pass
