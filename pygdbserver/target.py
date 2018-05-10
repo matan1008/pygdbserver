@@ -320,9 +320,9 @@ class Target:
         """
         Fetch the address associated with a specific thread local storage
         area, determined by the specified thread, offset, and load_module.
-        :param thread: Address's thread.
-        :param offset: Address's offset.
-        :param load_module: Address's load_module.
+        :param ThreadInfo thread: Address's thread.
+        :param int offset: Address's offset.
+        :param int load_module: Address's load_module.
         :return: Thread's local storage address.
         :rtype: int
         :raises TargetGetTlsAddressError: Raised with error code on failure.
@@ -521,3 +521,24 @@ class Target:
         :param int pc: pc to write.
         """
         pass
+
+    @abstractmethod
+    def thread_stopped(self, thread):
+        """
+        Return true if thread is known to be stopped now.
+        :param ThreadInfo thread: Thread to check.
+        :return: If thread is stopped.
+        :rtype: bool
+        """
+        return True
+
+    @abstractmethod
+    def get_tib_address(self, ptid):
+        """
+        Read Thread Information Block address.
+        :param Ptid ptid: Thread's id.
+        :return: Thread's information block address.
+        :rtype: int
+        :raises TargetGetTibAddressError: Raised with error code on failure.
+        """
+        raise TargetGetTibAddressError(0)

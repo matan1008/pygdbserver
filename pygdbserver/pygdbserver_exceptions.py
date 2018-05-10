@@ -132,3 +132,10 @@ class TargetReadLoadmapError(TargetError):
 
     def __init__(self, errno):
         self.errno = errno
+
+
+class TargetGetTibAddressError(TargetError):
+    """ Raise when getting tib address fails. """
+
+    def __init__(self, error_code):
+        self.error_code = error_code
