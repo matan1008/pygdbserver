@@ -636,3 +636,22 @@ class Target:
         :raises TargetQxferLibrariesSvr4Error: On reading error.
         """
         raise TargetQxferLibrariesSvr4Error(0)
+
+    @abstractmethod
+    def supports_agent(self):
+        """
+        Return true if target supports debugging agent.
+        :return: True if supports agent.
+        :rtype: bool
+        """
+        return False
+
+    @abstractmethod
+    def supports_btrace(self, btrace_format):
+        """
+        Check whether the target supports branch tracing.
+        :param BtraceFormat btrace_format: Branch tracing format.
+        :return: True if supports btrace.
+        :rtype: bool
+        """
+        return False
