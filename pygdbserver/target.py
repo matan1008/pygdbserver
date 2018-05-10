@@ -485,3 +485,20 @@ class Target:
         :raises TargetReadLoadmapError: On reading error.
         """
         raise TargetReadLoadmapError(0)
+
+    @abstractmethod
+    def process_qsupported(self, features):
+        """
+        Target specific qSupported support.
+        :param list(str) features: List of features
+        """
+        pass
+
+    @abstractmethod
+    def supports_tracepoints(self):
+        """
+        Returns true if the target supports tracepoints.
+        :return: True if the target supports tracepoints.
+        :rtype: bool
+        """
+        return False
