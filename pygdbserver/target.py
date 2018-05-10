@@ -542,3 +542,24 @@ class Target:
         :raises TargetGetTibAddressError: Raised with error code on failure.
         """
         raise TargetGetTibAddressError(0)
+
+    @abstractmethod
+    def pause_all(self, freeze):
+        """
+        Pause all threads. There can be nested calls to pause_all, so a freeze counter
+        should be maintained.
+        :param bool freeze: If freeze, arrange for any resume attempt to
+        be ignored until an unpause_all call unfreezes threads again.
+        """
+        pass
+
+    @abstractmethod
+    def unpause_all(self, unfreeze):
+        """
+        Unpause all threads.  Threads that hadn't been resumed by the
+        client should be left stopped.  Basically a pause/unpause call
+        pair should not end up resuming threads that were stopped before
+        the pause call.
+        :param bool unfreeze: Opposite of `pause_all` freeze param
+        """
+        pass
