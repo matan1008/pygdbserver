@@ -151,3 +151,10 @@ class TargetInstallFastTracepointJumpPadError(TargetError):
 class TargetEmitOpsNotSupported(TargetError):
     """ Raise when bytecode compilation is not supported. """
     pass
+
+
+class TargetQxferLibrariesSvr4Error(TargetError):
+    """ Raise when reading solib info using qXfer packets fails. """
+
+    def __init__(self, errno):
+        self.errno = errno

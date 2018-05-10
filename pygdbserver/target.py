@@ -613,3 +613,26 @@ class Target:
         :rtype: bool
         """
         return False
+
+    @abstractmethod
+    def get_min_fast_tracepoint_insn_len(self):
+        """
+        Return the minimum length of an instruction that can be safely overwritten for use as a fast tracepoint.
+        :return: Minimum length.
+        :rtype: int
+        """
+        return 0
+
+    @abstractmethod
+    def qxfer_libraries_svr4(self, annex, writebuf, offset, len):
+        """
+        Read solib info on SVR4 platforms.
+        :param str annex: Memory's annex, of the form id/name.
+        :param str writebuf: Writing buffer, for consistency purpose only.
+        :param int offset: Reading offset.
+        :param int len: Reading size.
+        :return: Returns reading buffer on reading.
+        :rtype: str
+        :raises TargetQxferLibrariesSvr4Error: On reading error.
+        """
+        raise TargetQxferLibrariesSvr4Error(0)
