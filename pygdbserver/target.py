@@ -655,3 +655,24 @@ class Target:
         :rtype: bool
         """
         return False
+
+    @abstractmethod
+    def enable_btrace(self, ptid, conf):
+        """
+        Enable branch tracing for `ptid` based on `conf` and allocate a branch trace
+        target information struct for reading and for disabling branch trace.
+        :param Ptid ptid: Thread's id.
+        :param BtraceConfig conf: Btrace configuration.
+        :return: Btrace info.
+        :rtype: BtraceTargetInfo
+        """
+        return None
+
+    @abstractmethod
+    def disable_btrace(self, tinfo):
+        """
+        Disable branch tracing.
+        :param BtraceTargetInfo tinfo: Branch tracing info.
+        :raises TargetDisableBtraceError: In failure.
+        """
+        raise TargetDisableBtraceError()

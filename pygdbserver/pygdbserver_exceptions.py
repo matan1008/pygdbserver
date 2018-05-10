@@ -158,3 +158,8 @@ class TargetQxferLibrariesSvr4Error(TargetError):
 
     def __init__(self, errno):
         self.errno = errno
+
+
+class TargetDisableBtraceError(TargetError):
+    """ Raise when disabling btrace fails. """
+    pass
