@@ -120,3 +120,15 @@ class TargetQxferSiginfoError(TargetError):
 class TargetStartNonStopError(TargetError):
     """ Raise when switching stop mode fails. """
     pass
+
+
+class TargetUnknownCoreOfThreadError(TargetError):
+    """ Raise when getting core of thread fails. """
+    pass
+
+
+class TargetReadLoadmapError(TargetError):
+    """ Raise when reading loadmaps fails. """
+
+    def __init__(self, errno):
+        self.errno = errno

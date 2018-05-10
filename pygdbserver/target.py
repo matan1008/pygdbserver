@@ -453,7 +453,7 @@ class Target:
         pass
 
     @abstractmethod
-    def handle_monitor_command(self, command=None):
+    def handle_monitor_command(self, command):
         """
         If not None, target-specific routine to process monitor command.
         :param str command: Monitor command.
@@ -461,3 +461,27 @@ class Target:
         :rtype: bool
         """
         return False
+
+    @abstractmethod
+    def core_of_thread(self, ptid):
+        """
+        Returns the core given a thread.
+        :param Ptid ptid: Thread's ptid.
+        :return: Core of thread.
+        :rtype: int
+        :raises TargetUnknownCoreOfThreadError: if core is not known.
+        """
+        return TargetUnknownCoreOfThreadError()
+
+    @abstractmethod
+    def read_loadmap(self, annex, offset, len):
+        """
+        Read loadmaps.
+        :param str annex: Memory's annex, of the form id/name.
+        :param int offset: Reading offset.
+        :param int len: Reading size.
+        :return: Returns reading buffer.
+        :rtype: str
+        :raises TargetReadLoadmapError: On reading error.
+        """
+        raise TargetReadLoadmapError(0)
