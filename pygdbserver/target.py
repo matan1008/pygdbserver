@@ -594,3 +594,22 @@ class Target:
         :raises TargetInstallFastTracepointJumpPadError: Raised with error message in err if an error occurs
         """
         raise TargetInstallFastTracepointJumpPadError("")
+
+    @abstractmethod
+    def emit_ops(self):
+        """
+        Return the bytecode operations vector for the current inferior.
+        :return: Bytecode operations vector.
+        :rtype: EmitOps.
+        :raises TargetEmitOpsNotSupported: If bytecode compilation is not supported.
+        """
+        raise TargetEmitOpsNotSupported()
+
+    @abstractmethod
+    def supports_disable_randomization(self):
+        """
+        Returns true if the target supports disabling randomization.
+        :return: True if supports disable randomization.
+        :rtype: bool
+        """
+        return False

@@ -146,3 +146,8 @@ class TargetInstallFastTracepointJumpPadError(TargetError):
 
     def __init__(self, err):
         self.err = err
+
+
+class TargetEmitOpsNotSupported(TargetError):
+    """ Raise when bytecode compilation is not supported. """
+    pass
