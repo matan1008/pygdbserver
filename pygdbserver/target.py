@@ -1,5 +1,4 @@
 from abc import ABCMeta, abstractmethod
-from pygdbserver.pygdbserver_exceptions import *
 
 
 class Target:
@@ -15,14 +14,14 @@ class Target:
         :rtype: int.
         :raises TargetCreatingInferiorError: If creating process failed.
         """
-        raise TargetCreatingInferiorError()
+        raise NotImplementedError()
 
     @abstractmethod
     def post_create_inferior(self):
         """
         Do additional setup after a new process is created, including exec-wrapper completion.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def attach(self, pid):
@@ -32,7 +31,7 @@ class Target:
         :raises TargetAttachError: If attaching failed.
         :raises TargetAttachNotSupported: If attaching is unsupported.
         """
-        raise TargetAttachNotSupported()
+        raise NotImplementedError()
 
     @abstractmethod
     def kill(self, pid):
@@ -41,7 +40,7 @@ class Target:
         :param int pid: The process ID to kill.
         :raises TargetKillError: If killing fails.
         """
-        raise TargetKillError()
+        raise NotImplementedError()
 
     @abstractmethod
     def detach(self, pid):
@@ -50,7 +49,7 @@ class Target:
         :param int pid: The process ID to detach from.
         :raises TargetDetachError: If detaching fails.
         """
-        raise TargetDetachError()
+        raise NotImplementedError()
 
     @abstractmethod
     def mourn(self, proc):
@@ -58,7 +57,7 @@ class Target:
         The inferior process has died. Do what is right.
         :param ProcessInfo proc: Process to mourn on.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def join(self, pid):
@@ -66,7 +65,7 @@ class Target:
         Wait for inferior PID to exit.
         :param int pid: The process ID to wait for.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def thread_alive(self, pid):
@@ -76,7 +75,7 @@ class Target:
         :return: Whether the process is alive or not.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def resume(self, resume_info):
@@ -84,7 +83,7 @@ class Target:
         Resume the inferior process.
         :param list resume_info: List of resume actions.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def wait(self, ptid, status, options):
@@ -100,7 +99,7 @@ class Target:
         :rtype: Ptid
         :raises TargetWaitError: If waiting fails.
         """
-        raise TargetWaitError()
+        raise NotImplementedError()
 
     @abstractmethod
     def fetch_registers(self, regcache, regno):
@@ -109,7 +108,7 @@ class Target:
         :param Regcache regcache: Registers cache.
         :param int regno: If regno is -1, fetch all registers; otherwise, fetch at least regno.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def store_registers(self, regcache, regno):
@@ -118,7 +117,7 @@ class Target:
         :param Regcache regcache: Registers cache.
         :param int regno: If regno is -1, store all registers; otherwise, store at least regno.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def prepare_to_access_memory(self):
@@ -132,14 +131,14 @@ class Target:
         insertion routine.
         :raises TargetPrepareToAccessMemoryError: Raised with errno on failure.
         """
-        raise TargetPrepareToAccessMemoryError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def done_accessing_memory(self):
         """
         Undo the effects of prepare_to_access_memory.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def read_memory(self, memaddr, len):
@@ -152,7 +151,7 @@ class Target:
         :rtype: str
         :raises TargetReadMemoryError: Raised with errno on failure.
         """
-        raise TargetReadMemoryError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def write_memory(self, memaddr, myaddr, len):
@@ -164,7 +163,7 @@ class Target:
         :param int len: Number of bytes to write.
         :raises TargetWriteMemoryError: Raised with errno on failure.
         """
-        raise TargetWriteMemoryError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def look_up_symbols(self):
@@ -175,7 +174,7 @@ class Target:
         become available. NULL if we aren't interested in any
         symbols.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def request_interrupt(self):
@@ -183,7 +182,7 @@ class Target:
         Send an interrupt request to the inferior process,
         however is appropriate.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def read_auxv(self, offset, len):
@@ -195,7 +194,7 @@ class Target:
         :rtype: str
         :raises TargetReadMemoryError: Raised with errno on failure.
         """
-        raise TargetReadMemoryError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_z_point_type(self, z_type):
@@ -210,7 +209,7 @@ class Target:
         :return: If GDB Z breakpoint type is supported.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def insert_point(self, type_, addr, size, bp):
@@ -223,7 +222,7 @@ class Target:
         :raises TargetInsertPointError: On inserting failure.
         :raises TargetInsertPointNotSupported: If inserting is unsupported.
         """
-        raise TargetInsertPointNotSupported()
+        raise NotImplementedError()
 
     @abstractmethod
     def remove_point(self, type_, addr, size, bp):
@@ -236,7 +235,7 @@ class Target:
         :raises TargetRemovePointError: On removing failure.
         :raises TargetRemovePointNotSupported: If removing is unsupported.
         """
-        raise TargetRemovePointNotSupported()
+        raise NotImplementedError()
 
     @abstractmethod
     def stopped_by_sw_breakpoint(self):
@@ -246,7 +245,7 @@ class Target:
         :return: True if stopped by sw breakpoint.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_stopped_by_sw_breakpoint(self):
@@ -256,7 +255,7 @@ class Target:
         :return: True if supports trap that caused by sw breakpoint.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def stopped_by_hw_breakpoint(self):
@@ -265,7 +264,7 @@ class Target:
         :return: True if stopped by hw breakpoint.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_stopped_by_hw_breakpoint(self):
@@ -275,7 +274,7 @@ class Target:
         :return: True if supports trap that caused by hw breakpoint.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_hardware_single_step(self):
@@ -284,7 +283,7 @@ class Target:
         :return: True if supports hardware single step.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def stopped_by_watchpoint(self):
@@ -293,7 +292,7 @@ class Target:
         :return: True if stopped by watchpoint.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def stopped_data_address(self):
@@ -302,7 +301,7 @@ class Target:
         :return: Address associated with the watchpoint that hit.
         :rtype: int
         """
-        return 0
+        raise NotImplementedError()
 
     @abstractmethod
     def read_offsets(self):
@@ -313,7 +312,7 @@ class Target:
         :rtype: tuple(int, int)
         :raises TargetReadOffsetsError: On reading failure.
         """
-        raise TargetReadOffsetsError()
+        raise NotImplementedError()
 
     @abstractmethod
     def get_tls_address(self, thread, offset, load_module):
@@ -328,7 +327,7 @@ class Target:
         :raises TargetGetTlsAddressError: Raised with error code on failure.
         :raises TargetGetTlsAddressNotSupported: If fetching the address is unsupported.
         """
-        raise TargetGetTlsAddressNotSupported()
+        raise NotImplementedError()
 
     @abstractmethod
     def qxfer_spu(self, annex, writebuf, offset, len):
@@ -342,7 +341,7 @@ class Target:
         :rtype: str
         :raises TargetQxferSpuError: On reading / writing error.
         """
-        raise TargetQxferSpuError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def hostio_last_error(self):
@@ -351,7 +350,7 @@ class Target:
         :return: Last hostio.
         :rtype: str
         """
-        return ""
+        raise NotImplementedError()
 
     @abstractmethod
     def qxfer_osdata(self, annex, writebuf, offset, len):
@@ -365,7 +364,7 @@ class Target:
         :rtype: str
         :raises TargetQxferOsdataError: On reading / writing error.
         """
-        raise TargetQxferOsdataError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def qxfer_siginfo(self, annex, writebuf, offset, len):
@@ -379,7 +378,7 @@ class Target:
         :rtype: str
         :raises TargetQxferSiginfoError: On reading / writing error.
         """
-        raise TargetQxferSiginfoError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_non_stop(self):
@@ -388,7 +387,7 @@ class Target:
         :return: If target supports non stop
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def async(self, enable):
@@ -398,7 +397,7 @@ class Target:
         :return: Returns the previous enable state.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def start_non_stop(self, non_stop):
@@ -407,7 +406,7 @@ class Target:
         :param bool non_stop: True for switching to non-stop mode, False for all-stop.
         :raises TargetStartNonStopError: On switching error.
         """
-        raise TargetStartNonStopError()
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_multi_process(self):
@@ -416,7 +415,7 @@ class Target:
         :return: True if supports multi-process debugging.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_fork_events(self):
@@ -425,7 +424,7 @@ class Target:
         :return: True if supports fork events.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_vfork_events(self):
@@ -434,7 +433,7 @@ class Target:
         :return: True if supports vfork events.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_exec_events(self):
@@ -443,14 +442,14 @@ class Target:
         :return: True if supports exec events.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def handle_new_gdb_connection(self):
         """
         Allows target to re-initialize connection-specific settings.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def handle_monitor_command(self, command):
@@ -460,7 +459,7 @@ class Target:
         :return: True if handled, or False to perform default processing.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def core_of_thread(self, ptid):
@@ -471,7 +470,7 @@ class Target:
         :rtype: int
         :raises TargetUnknownCoreOfThreadError: if core is not known.
         """
-        return TargetUnknownCoreOfThreadError()
+        raise NotImplementedError()
 
     @abstractmethod
     def read_loadmap(self, annex, offset, len):
@@ -484,7 +483,7 @@ class Target:
         :rtype: str
         :raises TargetReadLoadmapError: On reading error.
         """
-        raise TargetReadLoadmapError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def process_qsupported(self, features):
@@ -492,7 +491,7 @@ class Target:
         Target specific qSupported support.
         :param list(str) features: List of features
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_tracepoints(self):
@@ -501,7 +500,7 @@ class Target:
         :return: True if the target supports tracepoints.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def read_pc(self, regcache):
@@ -511,7 +510,7 @@ class Target:
         :return: PC.
         :rtype: int
         """
-        return 0
+        raise NotImplementedError()
 
     @abstractmethod
     def write_pc(self, regcache, pc):
@@ -520,7 +519,7 @@ class Target:
         :param Regcache regcache: Regcache to write pc to.
         :param int pc: pc to write.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def thread_stopped(self, thread):
@@ -530,7 +529,7 @@ class Target:
         :return: If thread is stopped.
         :rtype: bool
         """
-        return True
+        raise NotImplementedError()
 
     @abstractmethod
     def get_tib_address(self, ptid):
@@ -541,7 +540,7 @@ class Target:
         :rtype: int
         :raises TargetGetTibAddressError: Raised with error code on failure.
         """
-        raise TargetGetTibAddressError(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def pause_all(self, freeze):
@@ -551,7 +550,7 @@ class Target:
         :param bool freeze: If freeze, arrange for any resume attempt to
         be ignored until an unpause_all call unfreezes threads again.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def unpause_all(self, unfreeze):
@@ -562,14 +561,14 @@ class Target:
         the pause call.
         :param bool unfreeze: Opposite of `pause_all` freeze param
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def stabilize_threads(self):
         """
         Stabilize all threads. That is, force them out of jump pads.
         """
-        pass
+        raise NotImplementedError()
 
     @abstractmethod
     def install_fast_tracepoint_jump_pad(self, tpoint, tpaddr, collector, lockaddr, orig_size, jump_entry,
@@ -593,7 +592,7 @@ class Target:
         :rtype: tuple(int, int, int, int, int)
         :raises TargetInstallFastTracepointJumpPadError: Raised with error message in err if an error occurs
         """
-        raise TargetInstallFastTracepointJumpPadError("")
+        raise NotImplementedError()
 
     @abstractmethod
     def emit_ops(self):
@@ -603,7 +602,7 @@ class Target:
         :rtype: EmitOps.
         :raises TargetEmitOpsNotSupported: If bytecode compilation is not supported.
         """
-        raise TargetEmitOpsNotSupported()
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_disable_randomization(self):
@@ -612,7 +611,7 @@ class Target:
         :return: True if supports disable randomization.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def get_min_fast_tracepoint_insn_len(self):
@@ -621,7 +620,7 @@ class Target:
         :return: Minimum length.
         :rtype: int
         """
-        return 0
+        raise NotImplementedError()
 
     @abstractmethod
     def qxfer_libraries_svr4(self, annex, writebuf, offset, len):
@@ -635,7 +634,7 @@ class Target:
         :rtype: str
         :raises TargetQxferLibrariesSvr4Error: On reading error.
         """
-        raise TargetQxferLibrariesSvr4Error(0)
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_agent(self):
@@ -644,7 +643,7 @@ class Target:
         :return: True if supports agent.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_btrace(self, btrace_format):
@@ -654,7 +653,7 @@ class Target:
         :return: True if supports btrace.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def enable_btrace(self, ptid, conf):
@@ -666,7 +665,7 @@ class Target:
         :return: Btrace info.
         :rtype: BtraceTargetInfo
         """
-        return None
+        raise NotImplementedError()
 
     @abstractmethod
     def disable_btrace(self, tinfo):
@@ -675,7 +674,7 @@ class Target:
         :param BtraceTargetInfo tinfo: Branch tracing info.
         :raises TargetDisableBtraceError: In failure.
         """
-        raise TargetDisableBtraceError()
+        raise NotImplementedError()
 
     @abstractmethod
     def read_btrace(self, tinfo, read_type):
@@ -687,7 +686,7 @@ class Target:
         :rtype: str
         :raises TargetReadBtraceError: On reading failure.
         """
-        raise TargetReadBtraceError("")
+        raise NotImplementedError()
 
     @abstractmethod
     def read_btrace_conf(self, tinfo):
@@ -698,7 +697,7 @@ class Target:
         :rtype: str
         :raises TargetReadBtraceConfigurationError: On reading failure.
         """
-        raise TargetReadBtraceConfigurationError("")
+        raise NotImplementedError()
 
     @abstractmethod
     def supports_range_stepping(self):
@@ -707,7 +706,7 @@ class Target:
         :return: True if supports range stepping.
         :rtype: bool
         """
-        return False
+        raise NotImplementedError()
 
     @abstractmethod
     def pid_to_exec_file(self, pid):
@@ -718,4 +717,4 @@ class Target:
         :rtype: str
         :raises TargetPidToExecFileError: If the executable file cannot be determined.
         """
-        raise TargetPidToExecFileError()
+        raise NotImplementedError()
