@@ -758,3 +758,25 @@ class Target:
         :raises NotImplementedError: On systems where all processes share a common filesystem.
         """
         raise NotImplementedError()
+
+    @abstractmethod
+    def breakpoint_kind_from_pc(self, pcptr):
+        """
+        Return the breakpoint kind for this target based on PC.
+        The `pcptr` is adjusted to the real memory location in case a flag
+        (e.g., the Thumb bit on ARM) was present in the PC.
+        :param int pcptr: Adjusted PC.
+        :return: Breakpoint kind.
+        :rtype: int
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def sw_breakpoint_from_kind(self, kind):
+        """
+        Return the software breakpoint from `kind`.
+        :param int kind: Can have target specific meaning like the Z0 kind parameter.
+        :return: Software breakpoint (as written in memory).
+        :rtype: str
+        """
+        raise NotImplementedError()
