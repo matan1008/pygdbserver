@@ -804,3 +804,30 @@ class Target:
         :rtype: int
         """
         raise NotImplementedError()
+
+    @abstractmethod
+    def supports_software_single_step(self):
+        """
+        Returns true if the target can software single step.
+        :return: True if supports software single stepping.
+        :rtype: bool
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def supports_catch_syscall(self):
+        """
+        Return true if the target supports catch syscall, false otherwise.
+        :return: True if supports catch syscall.
+        :rtype: bool
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_ipa_tdesc_idx(self):
+        """
+        Return tdesc index for IPA.
+        :return: Target description index.
+        :rtype: int
+        """
+        raise NotImplementedError()
