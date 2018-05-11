@@ -189,3 +189,8 @@ class TargetReadlinkError(TargetError):
 
     def __init__(self, errno):
         self.errno = errno
+
+
+class TargetThreadNameError(TargetError):
+    """ Raise when thread's name cannot be determined. """
+    pass

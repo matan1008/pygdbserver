@@ -780,3 +780,27 @@ class Target:
         :rtype: str
         """
         raise NotImplementedError()
+
+    @abstractmethod
+    def thread_name(self, ptid):
+        """
+        Return the thread's name.
+        :param Ptid ptid: Thread's id.
+        :return: Thread's name.
+        :rtype: str
+        :raises TargetThreadNameError: If the target is unable to determine it.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def breakpoint_kind_from_current_state(self, pcptr):
+        """
+        Return the breakpoint kind for this target based on the current
+        processor state (e.g. the current instruction mode on ARM) and the
+        PC. The `pcptr` is adjusted to the real memory location in case a flag
+        (e.g., the Thumb bit on ARM) is present in the PC.
+        :param int pcptr: Adjusted PC.
+        :return: Breakpoint kind.
+        :rtype: int
+        """
+        raise NotImplementedError()
