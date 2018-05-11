@@ -699,3 +699,23 @@ class Target:
         :raises TargetReadBtraceConfigurationError: On reading failure.
         """
         raise TargetReadBtraceConfigurationError("")
+
+    @abstractmethod
+    def supports_range_stepping(self):
+        """
+        Return true if target supports range stepping.
+        :return: True if supports range stepping.
+        :rtype: bool
+        """
+        return False
+
+    @abstractmethod
+    def pid_to_exec_file(self, pid):
+        """
+        Return the full absolute name of the executable file that was run to create the process `pid`.
+        :param int pid: Process id.
+        :return: A pointer to a character string containing the pathname.
+        :rtype: str
+        :raises TargetPidToExecFileError: If the executable file cannot be determined.
+        """
+        raise TargetPidToExecFileError()

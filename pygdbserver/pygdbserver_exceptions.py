@@ -177,3 +177,8 @@ class TargetReadBtraceConfigurationError(TargetError):
 
     def __init__(self, err):
         self.err = err
+
+
+class TargetPidToExecFileError(TargetError):
+    """ Raise when executable file cannot be determined. """
+    pass
