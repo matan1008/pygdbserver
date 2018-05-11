@@ -182,3 +182,10 @@ class TargetReadBtraceConfigurationError(TargetError):
 class TargetPidToExecFileError(TargetError):
     """ Raise when executable file cannot be determined. """
     pass
+
+
+class TargetReadlinkError(TargetError):
+    """ Raise when reading multiple filesystem aware readlink fails. """
+
+    def __init__(self, errno):
+        self.errno = errno

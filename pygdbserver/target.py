@@ -718,3 +718,43 @@ class Target:
         :raises TargetPidToExecFileError: If the executable file cannot be determined.
         """
         raise NotImplementedError()
+
+    @abstractmethod
+    def multifs_open(self, pid, filename, flags, mode):
+        """
+        Multiple-filesystem-aware open. Like open(2), but operating in the filesystem as it appears to process PID.
+        :param int pid: Process id.
+        :param str filename: Like open(2).
+        :param int flags: Like open(2).
+        :param int mode: Like open(2).
+        :return: Like open(2).
+        :rtype: int
+        :raises NotImplementedError: On systems where all processes share a common filesystem.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def multifs_unlink(self, pid, filename):
+        """
+        Multiple-filesystem-aware unlink. Like unlink(2), but operates in the filesystem as it appears to process `pid`.
+        :param int pid: Process id.
+        :param str filename: Like unlink(2).
+        :return: Like unlink(2).
+        :rtype: int
+        :raises NotImplementedError: On systems where all processes share a common filesystem.
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def multifs_readlink(self, pid, filename):
+        """
+        Multiple-filesystem-aware readlink. Like readlink(2),
+        but operating in the filesystem as it appears to process `pid`.
+        :param int pid:
+        :param str filename:
+        :return: Contents of the symbolic link.
+        :rtype: str
+        :raises TargetReadlinkError: On readlink internal errors, raised with errno.
+        :raises NotImplementedError: On systems where all processes share a common filesystem.
+        """
+        raise NotImplementedError()
