@@ -163,3 +163,17 @@ class TargetQxferLibrariesSvr4Error(TargetError):
 class TargetDisableBtraceError(TargetError):
     """ Raise when disabling btrace fails. """
     pass
+
+
+class TargetReadBtraceError(TargetError):
+    """ Raise when reading branch trace data fails. """
+
+    def __init__(self, err):
+        self.err = err
+
+
+class TargetReadBtraceConfigurationError(TargetError):
+    """ Raise when reading branch trace configuration fails. """
+
+    def __init__(self, err):
+        self.err = err

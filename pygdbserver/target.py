@@ -676,3 +676,26 @@ class Target:
         :raises TargetDisableBtraceError: In failure.
         """
         raise TargetDisableBtraceError()
+
+    @abstractmethod
+    def read_btrace(self, tinfo, read_type):
+        """
+        Read branch trace data.
+        :param BtraceTargetInfo tinfo: Branch trace to read.
+        :param BtraceReadType read_type: Read type (all, new, delta).
+        :return: Branch trace's data.
+        :rtype: str
+        :raises TargetReadBtraceError: On reading failure.
+        """
+        raise TargetReadBtraceError("")
+
+    @abstractmethod
+    def read_btrace_conf(self, tinfo):
+        """
+        Read the branch trace configuration.
+        :param BtraceTargetInfo tinfo: Branch trace to read.
+        :return: Branch trace's configuration.
+        :rtype: str
+        :raises TargetReadBtraceConfigurationError: On reading failure.
+        """
+        raise TargetReadBtraceConfigurationError("")
