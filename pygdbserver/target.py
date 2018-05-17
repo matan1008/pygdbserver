@@ -141,12 +141,12 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def read_memory(self, memaddr, len):
+    def read_memory(self, memaddr, len_):
         """
         Read memory from the inferior process.
         This should generally be called through read_inferior_memory, which handles breakpoint shadowing.
         :param int memaddr: Address to read from.
-        :param int len: Number of bytes to read.
+        :param int len_: Number of bytes to read.
         :return: Data from memory.
         :rtype: str
         :raises TargetReadMemoryError: Raised with errno on failure.
@@ -154,13 +154,13 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def write_memory(self, memaddr, myaddr, len):
+    def write_memory(self, memaddr, myaddr, len_):
         """
         Write memory to the inferior process.
         This should generally be called through write_inferior_memory, which handles breakpoint shadowing.
         :param int memaddr: Address to write to.
         :param str myaddr: Buffer to write.
-        :param int len: Number of bytes to write.
+        :param int len_: Number of bytes to write.
         :raises TargetWriteMemoryError: Raised with errno on failure.
         """
         raise NotImplementedError()
@@ -185,11 +185,11 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def read_auxv(self, offset, len):
+    def read_auxv(self, offset, len_):
         """
         Read auxiliary vector data from the inferior process.
         :param int offset: Offset read from.
-        :param int len: Number of bytes to read.
+        :param int len_: Number of bytes to read.
         :return: Data from memory.
         :rtype: str
         :raises TargetReadMemoryError: Raised with errno on failure.
@@ -330,13 +330,13 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def qxfer_spu(self, annex, writebuf, offset, len):
+    def qxfer_spu(self, annex, writebuf, offset, len_):
         """
         Read/Write from/to spufs using qXfer packets.
         :param str annex: Memory's annex, of the form id/name.
         :param str writebuf: Writing buffer.
         :param int offset: Reading / writing offset.
-        :param int len: Reading / writing size.
+        :param int len_: Reading / writing size.
         :return: Returns reading buffer on reading, undefined on writing.
         :rtype: str
         :raises TargetQxferSpuError: On reading / writing error.
@@ -353,13 +353,13 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def qxfer_osdata(self, annex, writebuf, offset, len):
+    def qxfer_osdata(self, annex, writebuf, offset, len_):
         """
         Read/Write OS data using qXfer packets.
         :param str annex: Memory's annex, of the form id/name.
         :param str writebuf: Writing buffer.
         :param int offset: Reading / writing offset.
-        :param int len: Reading / writing size.
+        :param int len_: Reading / writing size.
         :return: Returns reading buffer on reading, undefined on writing.
         :rtype: str
         :raises TargetQxferOsdataError: On reading / writing error.
@@ -367,13 +367,13 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def qxfer_siginfo(self, annex, writebuf, offset, len):
+    def qxfer_siginfo(self, annex, writebuf, offset, len_):
         """
         Read/Write extra signal info.
         :param str annex: Memory's annex, of the form id/name.
         :param str writebuf: Writing buffer.
         :param int offset: Reading / writing offset.
-        :param int len: Reading / writing size.
+        :param int len_: Reading / writing size.
         :return: Returns reading buffer on reading, undefined on writing.
         :rtype: str
         :raises TargetQxferSiginfoError: On reading / writing error.
@@ -473,12 +473,12 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def read_loadmap(self, annex, offset, len):
+    def read_loadmap(self, annex, offset, len_):
         """
         Read loadmaps.
         :param str annex: Memory's annex, of the form id/name.
         :param int offset: Reading offset.
-        :param int len: Reading size.
+        :param int len_: Reading size.
         :return: Returns reading buffer.
         :rtype: str
         :raises TargetReadLoadmapError: On reading error.
@@ -623,13 +623,13 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def qxfer_libraries_svr4(self, annex, writebuf, offset, len):
+    def qxfer_libraries_svr4(self, annex, writebuf, offset, len_):
         """
         Read solib info on SVR4 platforms.
         :param str annex: Memory's annex, of the form id/name.
         :param str writebuf: Writing buffer, for consistency purpose only.
         :param int offset: Reading offset.
-        :param int len: Reading size.
+        :param int len_: Reading size.
         :return: Returns reading buffer on reading.
         :rtype: str
         :raises TargetQxferLibrariesSvr4Error: On reading error.
