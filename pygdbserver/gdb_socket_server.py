@@ -4,8 +4,9 @@ from pygdbserver.gdb_server import GdbServer
 
 class GdbServerRequestHandler(SocketServer.BaseRequestHandler):
     def handle(self):
-        data = self.request.recv(1024)
-        self.request.sendall(self.server.gdb_server.process_packet(data))
+        while True:
+            data = self.request.recv(1024)
+            self.request.sendall(self.server.gdb_server.process_packet(data))
 
 
 class GdbSocketServer(SocketServer.TCPServer):
