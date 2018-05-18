@@ -1,3 +1,4 @@
+# coding=utf-8
 from pygdbserver.pygdbserver_exceptions import *
 
 
@@ -5,7 +6,14 @@ class GdbServer(object):
     def __init__(self, target):
         self.target = target
         self.requests_to_handle_functions_map = {
+            "!": self.handle_extend_protocol,
         }
+        self.extended_protocol = False
+
+    @staticmethod
+    def write_ok():
+        """ Return positive response """
+        return "OK"
 
     @staticmethod
     def calc_checksum(st):
@@ -40,7 +48,12 @@ class GdbServer(object):
         :return: GDB packet.
         :rtype: str
         """
-        return "${}#{:X}".format(packet_data, GdbServer.calc_checksum(packet_data))
+        return "${}#{:02X}".format(packet_data, GdbServer.calc_checksum(packet_data))
+
+    def handle_extend_protocol(self, data):
+        """ Extend protocol """
+        self.extended_protocol = True
+        return self.write_ok()
 
     def process_packet(self, data):
         """
@@ -49,6 +62,8 @@ class GdbServer(object):
         :return: Remote GDB response packet.
         :rtype: str
         """
+        if data in ("+", "-"):
+            return ""
         packet_data = self.extract_packet_data(data)
         if packet_data[0] in self.requests_to_handle_functions_map:
             response = self.requests_to_handle_functions_map[packet_data[0]](packet_data)
