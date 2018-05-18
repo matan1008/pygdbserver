@@ -194,3 +194,8 @@ class TargetReadlinkError(TargetError):
 class TargetThreadNameError(TargetError):
     """ Raise when thread's name cannot be determined. """
     pass
+
+
+class InvalidPacketError(PyGdbServerException):
+    """ If packet is not from the form `$packet-data#checksum`. """
+    pass
