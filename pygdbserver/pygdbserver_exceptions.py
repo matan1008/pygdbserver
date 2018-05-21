@@ -199,3 +199,8 @@ class TargetThreadNameError(TargetError):
 class InvalidPacketError(PyGdbServerException):
     """ If packet is not from the form `$packet-data#checksum`. """
     pass
+
+
+class GdbUnknownSignal(PyGdbServerException):
+    """ For when `do_gdb_signal_to_host` fails to find host signal. """
+    pass
