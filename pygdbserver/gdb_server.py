@@ -1,5 +1,7 @@
 # coding=utf-8
 import logging
+from pygdbserver.ptid import Ptid
+from pygdbserver.signals import GdbSignal
 from pygdbserver.thread_info import ThreadInfo
 from pygdbserver.process_info import ProcessInfo
 from pygdbserver.target_waitstatus import TargetWaitStatus
@@ -33,6 +35,10 @@ class GdbServer(object):
         self.disable_packet_v_cont = False
         self.v_cont_supported = True
         self.multi_process = False
+        self.report_fork_events = False
+        self.report_vfork_events = False
+        self.report_exec_events = False
+        self.report_thread_events = False
 
     @staticmethod
     def write_ok():
@@ -79,7 +85,8 @@ class GdbServer(object):
         """
         return "${}#{:02X}".format(packet_data, GdbServer.calc_checksum(packet_data))
 
-    def find_inferior_by_ptid(self, ptid, inferiors_list):
+    @staticmethod
+    def find_inferior_by_ptid(ptid, inferiors_list):
         try:
             return filter(lambda inf: inf.id == ptid, inferiors_list)[0]
         except IndexError:
@@ -104,7 +111,39 @@ class GdbServer(object):
         return bool(self.all_threads)
 
     def prepare_resume_reply(self, ptid, status):
-        raise NotImplementedError("yet")
+        """
+        Prepare a resume reply.
+        :param Ptid ptid:
+        :param TargetWaitStatus status:
+        :return:
+        """
+        self.logger.debug("Writing resume reply for %s:%d\n", str(ptid), status.kind)
+        resp = ""
+        if status.kind in (TargetWaitkind.TARGET_WAITKIND_STOPPED,
+                           TargetWaitkind.TARGET_WAITKIND_FORKED,
+                           TargetWaitkind.TARGET_WAITKIND_VFORKED,
+                           TargetWaitkind.TARGET_WAITKIND_VFORK_DONE,
+                           TargetWaitkind.TARGET_WAITKIND_EXECD,
+                           TargetWaitkind.TARGET_WAITKIND_THREAD_CREATED,
+                           TargetWaitkind.TARGET_WAITKIND_SYSCALL_ENTRY,
+                           TargetWaitkind.TARGET_WAITKIND_SYSCALL_RETURN):
+            if (status.kind is TargetWaitkind.TARGET_WAITKIND_FORKED and self.report_fork_events) or (
+                            status.kind is TargetWaitkind.TARGET_WAITKIND_VFORKED and self.report_vfork_events):
+                event = "fork" if status.kind is TargetWaitkind.TARGET_WAITKIND_FORKED else "vfork"
+                resp = "T{:02x}{}:{};".format(GdbSignal.GDB_SIGNAL_TRAP, event,
+                                              status.related_pid.write_ptid(self.multi_process))
+            elif status.kind is TargetWaitkind.TARGET_WAITKIND_VFORK_DONE and self.report_vfork_events:
+                resp = "T{:02x}vforkdone:;".format(GdbSignal.GDB_SIGNAL_TRAP)
+            elif status.kind is TargetWaitkind.TARGET_WAITKIND_EXECD and self.report_exec_events:
+                resp = "T{:02x}{}:{};".format(GdbSignal.GDB_SIGNAL_TRAP, "exec", status.execd_pathname.encode("hex"))
+                status.execd_pathname = None
+            elif status.kind is TargetWaitkind.TARGET_WAITKIND_THREAD_CREATED and self.report_thread_events:
+                resp = "T{:02x}create:;".format(GdbSignal.GDB_SIGNAL_TRAP)
+            elif status.kind in (TargetWaitkind.TARGET_WAITKIND_SYSCALL_ENTRY, TargetWaitkind.TARGET_WAITKIND_SYSCALL_RETURN):
+                event = "syscall_entry" if status.kind is TargetWaitkind.TARGET_WAITKIND_SYSCALL_ENTRY else "syscall_return"
+                resp = "T{:02x}{}:{:x};".format(GdbSignal.GDB_SIGNAL_TRAP, event, status.syscall_number)
+            else:
+                resp = "T{:02x}".format(status.sig)
 
     def handle_extend_protocol(self, data):
         """ Extend protocol """
@@ -173,7 +212,7 @@ class GdbServer(object):
             pass
         if data.startswith("vRun;"):
             if (not self.extended_protocol or not self.multi_process) and self.target_running():
-                print "Already debugging a process\n"
+                self.logger.info("Already debugging a process\n")
                 return self.write_enn()
             return self.handle_v_run(data)
 
