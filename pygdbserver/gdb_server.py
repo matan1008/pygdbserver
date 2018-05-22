@@ -12,6 +12,7 @@ class GdbServer(object):
         self.requests_to_handle_functions_map = {
             "!": self.handle_extend_protocol,
             "?": self.handle_status,
+            "v": self.handle_v_requests,
         }
 
         self.all_processes = []
@@ -23,11 +24,19 @@ class GdbServer(object):
         self.cont_thread = None
         self.general_thread = None
         self.current_thread = None
+        self.disable_packet_v_cont = False
+        self.v_cont_supported = True
+        self.multi_process = False
 
     @staticmethod
     def write_ok():
         """ Return positive response """
         return "OK"
+
+    @staticmethod
+    def write_enn():
+        """ Return negative response """
+        return "E01"
 
     @staticmethod
     def calc_checksum(st):
@@ -85,6 +94,9 @@ class GdbServer(object):
             self.current_thread = self.find_thread(self.cont_thread)
         return self.current_thread is not None
 
+    def target_running(self):
+        return bool(self.all_threads)
+
     def prepare_resume_reply(self, ptid, status):
         raise NotImplementedError("yet")
 
@@ -125,6 +137,39 @@ class GdbServer(object):
                 return self.prepare_resume_reply(thread.id, thread.last_status)
             else:
                 return "W00"
+
+    def handle_v_run(self, data):
+        """ Run a new program. """
+        raise NotImplementedError()
+
+    def handle_v_requests(self, data):
+        """
+        Handle all of the extended 'v' packets.
+        :param str data: Remote GDB request packet.
+        """
+        if not self.disable_packet_v_cont:
+            if data == "vCtrlC":
+                self.target.request_interrupt()
+                return self.write_ok()
+            elif data.startswith("vCont;"):
+                pass
+            elif data.startswith("vCont?"):
+                res = "vCont;c;C;t"
+                if self.target.supports_hardware_single_step() or \
+                        self.target.supports_software_single_step() or not self.v_cont_supported:
+                    res += ";s;S"
+                if self.target.supports_range_stepping():
+                    res += ";r"
+                return res
+        if data.startswith("vFile:"):
+            pass
+        if data.startswith("vAttach;"):
+            pass
+        if data.startswith("vRun;"):
+            if (not self.extended_protocol or not self.multi_process) and self.target_running():
+                print "Already debugging a process\n"
+                return self.write_enn()
+            return self.handle_v_run(data)
 
     def process_packet(self, data):
         """
