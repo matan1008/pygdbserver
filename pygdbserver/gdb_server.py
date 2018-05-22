@@ -1,4 +1,5 @@
 # coding=utf-8
+import logging
 from pygdbserver.thread_info import ThreadInfo
 from pygdbserver.process_info import ProcessInfo
 from pygdbserver.target_waitstatus import TargetWaitStatus
@@ -7,7 +8,12 @@ from pygdbserver.pygdbserver_exceptions import *
 
 
 class GdbServer(object):
-    def __init__(self, target):
+    def __init__(self, target, logger=None):
+        if logger is None:
+            logging.basicConfig()
+            self.logger = logging.getLogger("gdbserver")
+        else:
+            self.logger = logger
         self.target = target
         self.requests_to_handle_functions_map = {
             "!": self.handle_extend_protocol,
