@@ -119,28 +119,28 @@ class GdbServer(object):
         """
         self.logger.debug("Writing resume reply for %s:%d\n", str(ptid), status.kind)
         resp = ""
-        if status.kind in (TargetWaitkind.TARGET_WAITKIND_STOPPED,
-                           TargetWaitkind.TARGET_WAITKIND_FORKED,
-                           TargetWaitkind.TARGET_WAITKIND_VFORKED,
-                           TargetWaitkind.TARGET_WAITKIND_VFORK_DONE,
-                           TargetWaitkind.TARGET_WAITKIND_EXECD,
-                           TargetWaitkind.TARGET_WAITKIND_THREAD_CREATED,
-                           TargetWaitkind.TARGET_WAITKIND_SYSCALL_ENTRY,
-                           TargetWaitkind.TARGET_WAITKIND_SYSCALL_RETURN):
-            if (status.kind is TargetWaitkind.TARGET_WAITKIND_FORKED and self.report_fork_events) or (
-                            status.kind is TargetWaitkind.TARGET_WAITKIND_VFORKED and self.report_vfork_events):
-                event = "fork" if status.kind is TargetWaitkind.TARGET_WAITKIND_FORKED else "vfork"
+        if status.kind in (TargetWaitkind.STOPPED,
+                           TargetWaitkind.FORKED,
+                           TargetWaitkind.VFORKED,
+                           TargetWaitkind.VFORK_DONE,
+                           TargetWaitkind.EXECD,
+                           TargetWaitkind.THREAD_CREATED,
+                           TargetWaitkind.SYSCALL_ENTRY,
+                           TargetWaitkind.SYSCALL_RETURN):
+            if (status.kind is TargetWaitkind.FORKED and self.report_fork_events) or (
+                            status.kind is TargetWaitkind.VFORKED and self.report_vfork_events):
+                event = "fork" if status.kind is TargetWaitkind.FORKED else "vfork"
                 resp = "T{:02x}{}:{};".format(GdbSignal.GDB_SIGNAL_TRAP, event,
                                               status.related_pid.write_ptid(self.multi_process))
-            elif status.kind is TargetWaitkind.TARGET_WAITKIND_VFORK_DONE and self.report_vfork_events:
+            elif status.kind is TargetWaitkind.VFORK_DONE and self.report_vfork_events:
                 resp = "T{:02x}vforkdone:;".format(GdbSignal.GDB_SIGNAL_TRAP)
-            elif status.kind is TargetWaitkind.TARGET_WAITKIND_EXECD and self.report_exec_events:
+            elif status.kind is TargetWaitkind.EXECD and self.report_exec_events:
                 resp = "T{:02x}{}:{};".format(GdbSignal.GDB_SIGNAL_TRAP, "exec", status.execd_pathname.encode("hex"))
                 status.execd_pathname = None
-            elif status.kind is TargetWaitkind.TARGET_WAITKIND_THREAD_CREATED and self.report_thread_events:
+            elif status.kind is TargetWaitkind.THREAD_CREATED and self.report_thread_events:
                 resp = "T{:02x}create:;".format(GdbSignal.GDB_SIGNAL_TRAP)
-            elif status.kind in (TargetWaitkind.TARGET_WAITKIND_SYSCALL_ENTRY, TargetWaitkind.TARGET_WAITKIND_SYSCALL_RETURN):
-                event = "syscall_entry" if status.kind is TargetWaitkind.TARGET_WAITKIND_SYSCALL_ENTRY else "syscall_return"
+            elif status.kind in (TargetWaitkind.SYSCALL_ENTRY, TargetWaitkind.SYSCALL_RETURN):
+                event = "syscall_entry" if status.kind is TargetWaitkind.SYSCALL_ENTRY else "syscall_return"
                 resp = "T{:02x}{}:{:x};".format(GdbSignal.GDB_SIGNAL_TRAP, event, status.syscall_number)
             else:
                 resp = "T{:02x}".format(status.sig)
@@ -162,9 +162,7 @@ class GdbServer(object):
             map(ThreadInfo.set_pending_status, self.all_threads)
             thread = None
             # Prefer the last thread that reported an event to GDB (even if that was a GDB_SIGNAL_TRAP).
-            if self.last_status.kind not in (
-                    TargetWaitkind.TARGET_WAITKIND_IGNORE, TargetWaitkind.TARGET_WAITKIND_EXITED,
-                    TargetWaitkind.TARGET_WAITKIND_SIGNALLED):
+            if self.last_status.kind not in (TargetWaitkind.IGNORE, TargetWaitkind.EXITED, TargetWaitkind.SIGNALLED):
                 thread = self.find_thread(self.last_ptid)
             # If the last event thread is not found for some reason,
             # look for some other thread that might have an event to report.
@@ -178,7 +176,7 @@ class GdbServer(object):
                 thread.status_pending_p = False
                 self.general_thread = thread.id
                 self.set_desired_thread(True)
-                assert thread.last_status.kind != TargetWaitkind.TARGET_WAITKIND_IGNORE
+                assert thread.last_status.kind != TargetWaitkind.IGNORE
                 return self.prepare_resume_reply(thread.id, thread.last_status)
             else:
                 return "W00"

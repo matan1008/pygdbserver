@@ -94,7 +94,7 @@ class Target:
         :param TargetWaitstatus status: For storing status.
         :param int options: A bit set of options defined as TARGET_W*.
         If options contains TARGET_WNOHANG and there's no child stop to report,
-        return is null_ptid/TARGET_WAITKIND_IGNORE.
+        return is null_ptid/IGNORE.
         :return: Return ptid of child.
         :rtype: Ptid
         :raises TargetWaitError: If waiting fails.

@@ -21,16 +21,16 @@ class ThreadInfo(object):
         it.
         """
         self.last_resume_kind = ResumeKind.RESUME_STOP
-        if self.last_status.kind == TargetWaitkind.TARGET_WAITKIND_IGNORE:
+        if self.last_status.kind == TargetWaitkind.IGNORE:
             # Most threads are stopped implicitly (all-stop); tag that with signal 0.
-            self.last_status.kind = TargetWaitkind.TARGET_WAITKIND_STOPPED
+            self.last_status.kind = TargetWaitkind.STOPPED
             self.last_status.sig = GdbSignal.GDB_SIGNAL_0
 
     def set_pending_status(self):
         """
         If the thread is stopped with an interesting event, mark it as having a pending event.
         """
-        if self.last_status.kind != TargetWaitkind.TARGET_WAITKIND_STOPPED or (
+        if self.last_status.kind != TargetWaitkind.STOPPED or (
                     self.last_status.sig not in (GdbSignal.GDB_SIGNAL_0, GdbSignal.GDB_SIGNAL_TRAP)):
             self.status_pending_p = True
 

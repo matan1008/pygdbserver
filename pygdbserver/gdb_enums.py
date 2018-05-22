@@ -5,12 +5,9 @@ All enums required for the GDB server
 from enum import Enum
 
 TargetWaitkind = Enum("TargetWaitkind",
-                      ["TARGET_WAITKIND_EXITED", "TARGET_WAITKIND_STOPPED", "TARGET_WAITKIND_SIGNALLED",
-                       "TARGET_WAITKIND_LOADED", "TARGET_WAITKIND_FORKED", "TARGET_WAITKIND_VFORKED",
-                       "TARGET_WAITKIND_EXECD", "TARGET_WAITKIND_VFORK_DONE", "TARGET_WAITKIND_SYSCALL_ENTRY",
-                       "TARGET_WAITKIND_SYSCALL_RETURN", "TARGET_WAITKIND_SPURIOUS", "TARGET_WAITKIND_IGNORE",
-                       "TARGET_WAITKIND_NO_HISTORY", "TARGET_WAITKIND_NO_RESUMED", "TARGET_WAITKIND_THREAD_CREATED",
-                       "TARGET_WAITKIND_THREAD_EXITED"])
+                      ["EXITED", "STOPPED", "SIGNALLED", "LOADED", "FORKED", "VFORKED", "EXECD", "VFORK_DONE",
+                       "SYSCALL_ENTRY", "SYSCALL_RETURN", "SPURIOUS", "IGNORE", "NO_HISTORY", "NO_RESUMED",
+                       "THREAD_CREATED", "THREAD_EXITED"])
 
 RegisterStatus = Enum("RegisterStatus", {"REG_UNKNOWN": 0, "REG_VALID": 1, "REG_UNAVAILABLE": -1})
 
