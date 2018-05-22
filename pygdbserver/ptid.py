@@ -1,3 +1,4 @@
+# coding=utf-8
 class Ptid(object):
     """
     The Ptid is a collection of the various "ids" necessary for
@@ -51,5 +52,28 @@ class Ptid(object):
         """
         return Ptid(-1, 0, 0)
 
+    @staticmethod
+    def read_ptid(data, default_pid=None):
+        if data[0] == "p":
+            pid_data, tid_data = data[1:].split(".")
+            pid = int(pid_data, 16)
+            tid = -1 if tid_data.startswith("-1") else int(tid_data, 16)
+            return Ptid(pid, tid, 0)
+        else:
+            tid = -1 if data.startswith("-1") else int(data, 16)
+            return Ptid(default_pid, tid, 0)
+
     def __nonzero__(self):
         return self != Ptid.null_ptid()
+
+    def __str__(self):
+        if self == Ptid.minus_one_ptid():
+            return "<all threads>"
+        elif self == Ptid.null_ptid():
+            return "<null thread>"
+        elif self.tid != 0:
+            return "Thread {:d}.0x{:x}".format(self.pid, self.tid)
+        elif self.lwp != 0:
+            return "LWP {:d}.{:d}".format(self.pid, self.lwp)
+        else:
+            return "Process {:d}".format(self.pid)
