@@ -32,6 +32,7 @@ class GdbServer(object):
         self.cont_thread = None
         self.general_thread = None
         self.current_thread = None
+        self.saved_thread = None
         self.disable_packet_v_cont = False
         self.v_cont_supported = True
         self.multi_process = False
@@ -39,6 +40,8 @@ class GdbServer(object):
         self.report_vfork_events = False
         self.report_exec_events = False
         self.report_thread_events = False
+        self.swbreak_feature = False
+        self.hwbreak_feature = False
 
     @staticmethod
     def write_ok():
@@ -93,7 +96,10 @@ class GdbServer(object):
             return None
 
     def find_process(self, ptid):
-        """ Find a process_info by matching `ptid`. """
+        """
+        Find a process_info by matching `ptid`.
+        :rtype: ProcessInfo
+        """
         return self.find_inferior_by_ptid(ptid, self.all_processes)
 
     def find_thread(self, ptid):
@@ -110,6 +116,27 @@ class GdbServer(object):
     def target_running(self):
         return bool(self.all_threads)
 
+    def current_process(self):
+        """
+        Get the current process from the current thread.
+        :return: Current process.
+        :rtype: ProcessInfo
+        """
+        assert self.current_thread is not None
+        return self.find_process(self.current_thread.id.pid_to_ptid())
+
+    def get_thread_regcache(self, thread, fetch):
+        """
+        Get thread's regcache.
+        :param ThreadInfo thread:
+        :param bool fetch:
+        :return:
+        :rtype: Regcache
+        """
+        if thread.regcache_data is None:
+            proc = self.find_process(thread.id.pid_to_ptid())
+            assert proc.tdesc is not None
+
     def prepare_resume_reply(self, ptid, status):
         """
         Prepare a resume reply.
@@ -119,14 +146,10 @@ class GdbServer(object):
         """
         self.logger.debug("Writing resume reply for %s:%d\n", str(ptid), status.kind)
         resp = ""
-        if status.kind in (TargetWaitkind.STOPPED,
-                           TargetWaitkind.FORKED,
-                           TargetWaitkind.VFORKED,
-                           TargetWaitkind.VFORK_DONE,
-                           TargetWaitkind.EXECD,
-                           TargetWaitkind.THREAD_CREATED,
-                           TargetWaitkind.SYSCALL_ENTRY,
-                           TargetWaitkind.SYSCALL_RETURN):
+        if status.kind in (
+                TargetWaitkind.STOPPED, TargetWaitkind.FORKED, TargetWaitkind.VFORKED, TargetWaitkind.VFORK_DONE,
+                TargetWaitkind.EXECD, TargetWaitkind.THREAD_CREATED, TargetWaitkind.SYSCALL_ENTRY,
+                TargetWaitkind.SYSCALL_RETURN):
             if (status.kind is TargetWaitkind.FORKED and self.report_fork_events) or (
                             status.kind is TargetWaitkind.VFORKED and self.report_vfork_events):
                 event = "fork" if status.kind is TargetWaitkind.FORKED else "vfork"
@@ -144,6 +167,17 @@ class GdbServer(object):
                 resp = "T{:02x}{}:{:x};".format(GdbSignal.GDB_SIGNAL_TRAP, event, status.syscall_number)
             else:
                 resp = "T{:02x}".format(status.sig)
+            self.saved_thread = self.current_thread
+            self.current_thread = self.find_thread(ptid)
+            regp = self.current_process().tdesc.expedite_regs if self.current_process() is not None else []
+            regcache = self.get_thread_regcache(self.current_thread, True)
+            if self.target.stopped_by_watchpoint():
+                resp += "watch:{:08x};".format(self.target.stopped_data_address())
+            elif self.swbreak_feature and self.target.stopped_by_sw_breakpoint():
+                resp += "swbreak:;"
+            elif self.hwbreak_feature and self.target.stopped_by_hw_breakpoint():
+                resp += "hwbreak:;"
+            
 
     def handle_extend_protocol(self, data):
         """ Extend protocol """
