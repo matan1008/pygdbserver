@@ -204,3 +204,8 @@ class InvalidPacketError(PyGdbServerException):
 class GdbUnknownSignal(PyGdbServerException):
     """ For when `do_gdb_signal_to_host` fails to find host signal. """
     pass
+
+
+class UnhandledWaitkindError(PyGdbServerException):
+    """ For when `prepare_resume_reply` fails to handle status kind. """
+    pass

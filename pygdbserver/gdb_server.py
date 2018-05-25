@@ -42,6 +42,9 @@ class GdbServer(object):
         self.report_thread_events = False
         self.swbreak_feature = False
         self.hwbreak_feature = False
+        self.using_threads = False
+        self.disable_packet_t_thread = True
+        self.dll_changed = False
 
     @staticmethod
     def write_ok():
@@ -142,10 +145,10 @@ class GdbServer(object):
         Prepare a resume reply.
         :param Ptid ptid:
         :param TargetWaitStatus status:
-        :return:
+        :return: Resume reply.
+        :rtype: str
         """
         self.logger.debug("Writing resume reply for %s:%d\n", str(ptid), status.kind)
-        resp = ""
         if status.kind in (
                 TargetWaitkind.STOPPED, TargetWaitkind.FORKED, TargetWaitkind.VFORKED, TargetWaitkind.VFORK_DONE,
                 TargetWaitkind.EXECD, TargetWaitkind.THREAD_CREATED, TargetWaitkind.SYSCALL_ENTRY,
@@ -167,9 +170,9 @@ class GdbServer(object):
                 resp = "T{:02x}{}:{:x};".format(GdbSignal.GDB_SIGNAL_TRAP, event, status.syscall_number)
             else:
                 resp = "T{:02x}".format(status.sig)
-            self.saved_thread = self.current_thread
+            saved_thread = self.current_thread
             self.current_thread = self.find_thread(ptid)
-            regp = self.current_process().tdesc.expedite_regs if self.current_process() is not None else []
+            expedite_regs = self.current_process().tdesc.expedite_regs if self.current_process() is not None else []
             regcache = self.get_thread_regcache(self.current_thread, True)
             if self.target.stopped_by_watchpoint():
                 resp += "watch:{:08x};".format(self.target.stopped_data_address())
@@ -177,7 +180,33 @@ class GdbServer(object):
                 resp += "swbreak:;"
             elif self.hwbreak_feature and self.target.stopped_by_hw_breakpoint():
                 resp += "hwbreak:;"
-            
+            resp += "".join(map(regcache.out_reg_name, expedite_regs))
+            if self.using_threads and not self.disable_packet_t_thread:
+                if self.general_thread != ptid:
+                    if not self.non_stop:
+                        self.general_thread = ptid
+                    resp += "thread:{};".format(ptid.write_ptid(self.multi_process))
+                    try:
+                        resp += "core:{:x};".format(self.target.core_of_thread(ptid))
+                    except TargetUnknownCoreOfThreadError:
+                        pass
+            if self.dll_changed:
+                resp += "library:;"
+                self.dll_changed = False
+            self.current_thread = saved_thread
+        elif status.kind is TargetWaitkind.EXITED:
+            resp = "W{:x};process:{:x}".format(status.integer, ptid.pid) if self.multi_process else "W{:02x}".format(
+                status.integer)
+        elif status.kind is TargetWaitkind.SIGNALLED:
+            resp = "X{:x};process:{:x}".format(status.sig, ptid.pid) if self.multi_process else "X{:02x}".format(
+                status.sig)
+        elif status.kind is TargetWaitkind.THREAD_EXITED:
+            resp = "w{:x};{}".format(status.integer, ptid.write_ptid(self.multi_process))
+        elif status.kind is TargetWaitkind.NO_RESUMED:
+            resp = "N"
+        else:
+            raise UnhandledWaitkindError()
+        return resp
 
     def handle_extend_protocol(self, data):
         """ Extend protocol """
