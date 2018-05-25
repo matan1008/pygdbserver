@@ -9,9 +9,9 @@ class ThreadResume(object):
     These are passed around as an array.
     """
 
-    def __init__(self, thread):
+    def __init__(self, thread, kind, sig):
         self.thread = thread
-        self.kind = None
-        self.sig = None
+        self.kind = kind
+        self.sig = sig
         self.step_range_start = 0
         self.step_range_end = 0

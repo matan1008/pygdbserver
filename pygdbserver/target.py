@@ -1,4 +1,8 @@
+# coding=utf-8
 from abc import ABCMeta, abstractmethod
+from pygdbserver.signals import GdbSignal
+from pygdbserver.gdb_enums import ResumeKind
+from pygdbserver.thread_resume import ThreadResume
 
 
 class Target:
@@ -9,7 +13,7 @@ class Target:
         """
         Start a new process and registers the new process with the process list.
         :param str program: A path to the program to execute.
-        :param list args: An array of arguments, to be passed to the inferior as ``argv''.
+        :param list(str) args: An array of arguments, to be passed to the inferior as ``argv''.
         :return: The new PID on success.
         :rtype: int.
         :raises TargetCreatingInferiorError: If creating process failed.
@@ -81,7 +85,7 @@ class Target:
     def resume(self, resume_info):
         """
         Resume the inferior process.
-        :param list resume_info: List of resume actions.
+        :param list(ThreadResume) resume_info: List of resume actions.
         """
         raise NotImplementedError()
 
@@ -390,7 +394,7 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def async(self, enable):
+    def async_events(self, enable):
         """
         Enables async target events.
         :param bool enable: True for enabling async target events, False for disabling.
@@ -831,3 +835,10 @@ class Target:
         :rtype: int
         """
         raise NotImplementedError()
+
+    def continue_no_signal(self, ptid):
+        """
+        Request to continue with signal 0.
+        :param Ptid ptid: Ptid to continue.
+        """
+        self.resume([ThreadResume(ptid, ResumeKind.RESUME_CONTINUE, GdbSignal.GDB_SIGNAL_0)])
