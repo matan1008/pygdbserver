@@ -1,10 +1,15 @@
 # coding=utf-8
+import os
+import sys
+import signal
+import atexit
 import logging
 from pygdbserver.ptid import Ptid
-from pygdbserver.signals import GdbSignal
+from pygdbserver.regcache import Regcache
 from pygdbserver.thread_info import ThreadInfo
 from pygdbserver.process_info import ProcessInfo
 from pygdbserver.target_waitstatus import TargetWaitStatus
+from pygdbserver.signals import GdbSignal, gdb_signal_to_host, gdb_signal_to_name
 from pygdbserver.gdb_enums import *
 from pygdbserver.pygdbserver_exceptions import *
 
@@ -45,6 +50,9 @@ class GdbServer(object):
         self.using_threads = False
         self.disable_packet_t_thread = True
         self.dll_changed = False
+        self.program_argv = []
+        self.wrapper_argv = []
+        self.server_waiting = False
 
     @staticmethod
     def write_ok():
@@ -101,6 +109,7 @@ class GdbServer(object):
     def find_process(self, ptid):
         """
         Find a process_info by matching `ptid`.
+        :param Ptid ptid:
         :rtype: ProcessInfo
         """
         return self.find_inferior_by_ptid(ptid, self.all_processes)
@@ -117,6 +126,11 @@ class GdbServer(object):
         return self.current_thread is not None
 
     def target_running(self):
+        """
+        Check if any threads are running.
+        :return: If any threads are running.
+        :rtype: bool
+        """
         return bool(self.all_threads)
 
     def current_process(self):
@@ -138,7 +152,16 @@ class GdbServer(object):
         """
         if thread.regcache_data is None:
             proc = self.find_process(thread.id.pid_to_ptid())
-            assert proc.tdesc is not None
+            assert proc.tdesc is not None and proc.tdesc.registers_size != 0
+            thread.regcache_data = Regcache(proc.tdesc)
+        if fetch and not thread.regcache_data.registers_valid:
+            saved_thread = self.current_thread
+            self.current_thread = thread
+            thread.regcache_data.invalidate_registers()
+            self.target.fetch_registers(thread.regcache_data, -1)
+            self.current_thread = saved_thread
+            thread.regcache_data.registers_valid = True
+        return thread.regcache_data
 
     def prepare_resume_reply(self, ptid, status):
         """
@@ -244,9 +267,88 @@ class GdbServer(object):
             else:
                 return "W00"
 
+    def my_wait(self, ptid, our_status, options, connected_wait):
+        """
+        Wait for process.
+        :param Ptid ptid:
+        :param TargetWaitStatus our_status:
+        :param int options:
+        :param bool connected_wait:
+        :return: Ptid of child
+        :rtype: Ptid
+        """
+        if connected_wait:
+            self.server_waiting = True
+        ret = self.target.wait(ptid, our_status, options)
+        if our_status.kind is TargetWaitkind.LOADED:
+            our_status.kind = TargetWaitkind.STOPPED
+        if our_status.kind is TargetWaitkind.EXITED:
+            self.logger.error("\nChild exited with status %d\n", our_status.integer)
+        elif our_status.kind is TargetWaitkind.SIGNALLED:
+            self.logger.error("\nChild terminated with signal = 0x%x (%s)\n", gdb_signal_to_host(our_status.sig),
+                              gdb_signal_to_name(our_status.sig))
+        if connected_wait:
+            self.server_waiting = False
+        return ret
+
+    def start_inferior(self, argv):
+        """
+        Create an inferior.
+        :param list(str) argv: Inferior's arguments vector.
+        :return: new inferior's pid.
+        :rtype: int
+        """
+        new_argv = self.wrapper_argv + argv
+        map(lambda i, arg: self.logger.debug("new_argv[%d] = \"%s\"\n", i, arg), enumerate(new_argv))
+        if hasattr(signal, "SIGTTOU") and hasattr(signal, "SIGTTIN"):
+            signal.signal(signal.SIGTTOU, signal.SIG_DFL)
+            signal.signal(signal.SIGTTIN, signal.SIG_DFL)
+        signal_pid = self.target.create_inferior(new_argv[0], new_argv)
+        self.logger.error("Process %s created; pid = %ld\n", argv[0], signal_pid)
+        if hasattr(signal, "SIGTTOU") and hasattr(signal, "SIGTTIN"):
+            signal.signal(signal.SIGTTOU, signal.SIG_IGN)
+            signal.signal(signal.SIGTTIN, signal.SIG_IGN)
+            old_foreground_pgrp = os.tcgetpgrp(sys.stderr.fileno())
+            os.tcsetpgrp(sys.stderr.fileno(), signal_pid)
+            atexit.register(os.tcsetpgrp, sys.stderr.fileno(), old_foreground_pgrp)
+        if self.wrapper_argv:
+            self.last_ptid = self.my_wait(Ptid.from_pid(signal_pid), self.last_status, 0, False)
+            condition = self.last_status.kind is TargetWaitkind.STOPPED
+            while condition:
+                self.target.continue_no_signal(Ptid.from_pid(signal_pid))
+                self.last_ptid = self.my_wait(Ptid.from_pid(signal_pid), self.last_status, 0, False)
+                if self.last_status.kind is not TargetWaitkind.STOPPED:
+                    break
+                self.current_thread.last_resume_kind = ResumeKind.RESUME_STOP
+                self.current_thread.last_status = self.last_status
+                condition = self.last_status.sig != GdbSignal.GDB_SIGNAL_TRAP
+            self.target.post_create_inferior()
+            return signal_pid
+        self.last_ptid = self.my_wait(Ptid.from_pid(signal_pid), self.last_status, 0, False)
+        if self.last_status.kind not in (TargetWaitkind.EXITED, TargetWaitkind.SIGNALLED):
+            self.target.post_create_inferior()
+            self.current_thread.last_resume_kind = ResumeKind.RESUME_STOP
+            self.current_thread.last_status = self.last_status
+        else:
+            self.target.mourn(self.find_process(self.last_ptid.pid_to_ptid()))
+        return signal_pid
+
     def handle_v_run(self, data):
         """ Run a new program. """
-        raise NotImplementedError()
+        new_argv = data[len("vRun;"):].split(";")
+        if new_argv[0] == "":
+            if not self.program_argv or self.program_argv[0] == "":
+                return self.write_enn()
+            new_argv[0] = self.program_argv[0]
+        self.program_argv = new_argv
+        self.start_inferior(self.program_argv)
+        if self.last_status.kind is TargetWaitkind.STOPPED:
+            resp = self.prepare_resume_reply(self.last_ptid, self.last_status)
+            if self.non_stop:
+                self.general_thread = self.last_ptid
+            return resp
+        else:
+            return self.write_enn()
 
     def handle_v_requests(self, data):
         """
