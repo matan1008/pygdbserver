@@ -3,12 +3,31 @@ from gdb_enums import RegisterStatus
 
 
 class Regcache(object):
-    def __init__(self, tdesc):
+    """
+    The data for the register cache. Note that we have one per inferior;
+    this is primarily for simplicity, as the performance benefit is minimal.
+    """
+
+    def __init__(self, tdesc, reg_buf=None):
+        """
+        c'tor
+        :param TargetDesc tdesc: Register's target description.
+        :param str reg_buf: Optional, registers data.
+        """
         self.tdesc = tdesc
         self.registers_valid = False
-        self.registers_owned = True
-        self.registers = ""
-        self.register_status = [RegisterStatus.REG_UNAVAILABLE] * tdesc.num_registers()
+        if reg_buf is None:
+            self.registers_owned = True
+            self.registers = "\x00" * tdesc.registers_size
+            self.register_status = [RegisterStatus.REG_UNAVAILABLE] * tdesc.num_registers()
+        else:
+            self.registers_owned = False
+            self.registers = reg_buf
+            self.register_status = []
+
+    def invalidate_registers(self):
+        """ Set all registers' status to REG_UNAVAILABLE. """
+        self.register_status = [RegisterStatus.REG_UNAVAILABLE] * self.tdesc.num_registers()
 
     def register_data(self, n, fetch):
         reg = self.tdesc.reg_defs[n]
