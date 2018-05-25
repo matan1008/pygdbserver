@@ -4,6 +4,7 @@ import sys
 import signal
 import atexit
 import logging
+from contextlib import contextmanager
 from pygdbserver.ptid import Ptid
 from pygdbserver.regcache import Regcache
 from pygdbserver.thread_info import ThreadInfo
@@ -99,6 +100,19 @@ class GdbServer(object):
         """
         return "${}#{:02X}".format(packet_data, GdbServer.calc_checksum(packet_data))
 
+    @contextmanager
+    def replace_current_thread(self, new_thread):
+        """
+        Replaces the current thread for this context.
+        :param ThreadInfo new_thread: Thread to replace the current with.
+        """
+        saved_thread = self.current_thread
+        self.current_thread = new_thread
+        try:
+            yield
+        finally:
+            self.current_thread = saved_thread
+
     @staticmethod
     def find_inferior_by_ptid(ptid, inferiors_list):
         try:
@@ -155,13 +169,42 @@ class GdbServer(object):
             assert proc.tdesc is not None and proc.tdesc.registers_size != 0
             thread.regcache_data = Regcache(proc.tdesc)
         if fetch and not thread.regcache_data.registers_valid:
-            saved_thread = self.current_thread
-            self.current_thread = thread
-            thread.regcache_data.invalidate_registers()
-            self.target.fetch_registers(thread.regcache_data, -1)
-            self.current_thread = saved_thread
+            with self.replace_current_thread(thread):
+                thread.regcache_data.invalidate_registers()
+                self.target.fetch_registers(thread.regcache_data, -1)
             thread.regcache_data.registers_valid = True
         return thread.regcache_data
+
+    def prepare_status_independent_resume_reply(self, ptid):
+        """
+        Prepare a resume reply, for the parts that are status independent.
+        :param Ptid ptid:
+        :return: Resume reply.
+        :rtype: str
+        """
+        resp = ""
+        expedite_regs = self.current_process().tdesc.expedite_regs if self.current_process() is not None else []
+        regcache = self.get_thread_regcache(self.current_thread, True)
+        if self.target.stopped_by_watchpoint():
+            resp += "watch:{:08x};".format(self.target.stopped_data_address())
+        elif self.swbreak_feature and self.target.stopped_by_sw_breakpoint():
+            resp += "swbreak:;"
+        elif self.hwbreak_feature and self.target.stopped_by_hw_breakpoint():
+            resp += "hwbreak:;"
+        resp += "".join(map(regcache.out_reg_name, expedite_regs))
+        if self.using_threads and not self.disable_packet_t_thread:
+            if self.general_thread != ptid:
+                if not self.non_stop:
+                    self.general_thread = ptid
+                resp += "thread:{};".format(ptid.write_ptid(self.multi_process))
+                try:
+                    resp += "core:{:x};".format(self.target.core_of_thread(ptid))
+                except TargetUnknownCoreOfThreadError:
+                    pass
+        if self.dll_changed:
+            resp += "library:;"
+            self.dll_changed = False
+        return resp
 
     def prepare_resume_reply(self, ptid, status):
         """
@@ -193,30 +236,8 @@ class GdbServer(object):
                 resp = "T{:02x}{}:{:x};".format(GdbSignal.GDB_SIGNAL_TRAP, event, status.syscall_number)
             else:
                 resp = "T{:02x}".format(status.sig)
-            saved_thread = self.current_thread
-            self.current_thread = self.find_thread(ptid)
-            expedite_regs = self.current_process().tdesc.expedite_regs if self.current_process() is not None else []
-            regcache = self.get_thread_regcache(self.current_thread, True)
-            if self.target.stopped_by_watchpoint():
-                resp += "watch:{:08x};".format(self.target.stopped_data_address())
-            elif self.swbreak_feature and self.target.stopped_by_sw_breakpoint():
-                resp += "swbreak:;"
-            elif self.hwbreak_feature and self.target.stopped_by_hw_breakpoint():
-                resp += "hwbreak:;"
-            resp += "".join(map(regcache.out_reg_name, expedite_regs))
-            if self.using_threads and not self.disable_packet_t_thread:
-                if self.general_thread != ptid:
-                    if not self.non_stop:
-                        self.general_thread = ptid
-                    resp += "thread:{};".format(ptid.write_ptid(self.multi_process))
-                    try:
-                        resp += "core:{:x};".format(self.target.core_of_thread(ptid))
-                    except TargetUnknownCoreOfThreadError:
-                        pass
-            if self.dll_changed:
-                resp += "library:;"
-                self.dll_changed = False
-            self.current_thread = saved_thread
+            with self.replace_current_thread(self.find_thread(ptid)):
+                resp += self.prepare_status_independent_resume_reply(ptid)
         elif status.kind is TargetWaitkind.EXITED:
             resp = "W{:x};process:{:x}".format(status.integer, ptid.pid) if self.multi_process else "W{:02x}".format(
                 status.integer)
