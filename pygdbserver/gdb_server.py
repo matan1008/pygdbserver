@@ -175,6 +175,32 @@ class GdbServer(object):
             thread.regcache_data.registers_valid = True
         return thread.regcache_data
 
+    def prepare_thread_status_change_reply(self, status):
+        """
+        Prepare a resume reply, for thread status changes.
+        :param TargetWaitStatus status: Status change.
+        :return: Resume reply.
+        :rtype: str
+        """
+        if (status.kind is TargetWaitkind.FORKED and self.report_fork_events) or (
+                        status.kind is TargetWaitkind.VFORKED and self.report_vfork_events):
+            event = "fork" if status.kind is TargetWaitkind.FORKED else "vfork"
+            return "T{:02x}{}:{};".format(GdbSignal.GDB_SIGNAL_TRAP, event,
+                                          status.related_pid.write_ptid(self.multi_process))
+        elif status.kind is TargetWaitkind.VFORK_DONE and self.report_vfork_events:
+            return "T{:02x}vforkdone:;".format(GdbSignal.GDB_SIGNAL_TRAP)
+        elif status.kind is TargetWaitkind.EXECD and self.report_exec_events:
+            resp = "T{:02x}{}:{};".format(GdbSignal.GDB_SIGNAL_TRAP, "exec", status.execd_pathname.encode("hex"))
+            status.execd_pathname = None
+            return resp
+        elif status.kind is TargetWaitkind.THREAD_CREATED and self.report_thread_events:
+            return "T{:02x}create:;".format(GdbSignal.GDB_SIGNAL_TRAP)
+        elif status.kind in (TargetWaitkind.SYSCALL_ENTRY, TargetWaitkind.SYSCALL_RETURN):
+            event = "syscall_entry" if status.kind is TargetWaitkind.SYSCALL_ENTRY else "syscall_return"
+            return "T{:02x}{}:{:x};".format(GdbSignal.GDB_SIGNAL_TRAP, event, status.syscall_number)
+        else:
+            return "T{:02x}".format(status.sig)
+
     def prepare_status_independent_resume_reply(self, ptid):
         """
         Prepare a resume reply, for the parts that are status independent.
@@ -219,23 +245,7 @@ class GdbServer(object):
                 TargetWaitkind.STOPPED, TargetWaitkind.FORKED, TargetWaitkind.VFORKED, TargetWaitkind.VFORK_DONE,
                 TargetWaitkind.EXECD, TargetWaitkind.THREAD_CREATED, TargetWaitkind.SYSCALL_ENTRY,
                 TargetWaitkind.SYSCALL_RETURN):
-            if (status.kind is TargetWaitkind.FORKED and self.report_fork_events) or (
-                            status.kind is TargetWaitkind.VFORKED and self.report_vfork_events):
-                event = "fork" if status.kind is TargetWaitkind.FORKED else "vfork"
-                resp = "T{:02x}{}:{};".format(GdbSignal.GDB_SIGNAL_TRAP, event,
-                                              status.related_pid.write_ptid(self.multi_process))
-            elif status.kind is TargetWaitkind.VFORK_DONE and self.report_vfork_events:
-                resp = "T{:02x}vforkdone:;".format(GdbSignal.GDB_SIGNAL_TRAP)
-            elif status.kind is TargetWaitkind.EXECD and self.report_exec_events:
-                resp = "T{:02x}{}:{};".format(GdbSignal.GDB_SIGNAL_TRAP, "exec", status.execd_pathname.encode("hex"))
-                status.execd_pathname = None
-            elif status.kind is TargetWaitkind.THREAD_CREATED and self.report_thread_events:
-                resp = "T{:02x}create:;".format(GdbSignal.GDB_SIGNAL_TRAP)
-            elif status.kind in (TargetWaitkind.SYSCALL_ENTRY, TargetWaitkind.SYSCALL_RETURN):
-                event = "syscall_entry" if status.kind is TargetWaitkind.SYSCALL_ENTRY else "syscall_return"
-                resp = "T{:02x}{}:{:x};".format(GdbSignal.GDB_SIGNAL_TRAP, event, status.syscall_number)
-            else:
-                resp = "T{:02x}".format(status.sig)
+            resp = self.prepare_thread_status_change_reply(status)
             with self.replace_current_thread(self.find_thread(ptid)):
                 resp += self.prepare_status_independent_resume_reply(ptid)
         elif status.kind is TargetWaitkind.EXITED:
