@@ -63,6 +63,14 @@ class ThreadList(object):
         finally:
             self.current_thread = saved_thread
 
+    def target_running(self):
+        """
+        Check if any threads are running.
+        :return: If any threads are running.
+        :rtype: bool
+        """
+        return bool(self.all_threads)
+
     def add_thread(self, thread_id, target_data=""):
         """
         Add new thread to all threads.
