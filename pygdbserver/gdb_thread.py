@@ -4,9 +4,11 @@ from pygdbserver.gdb_enums import TargetWaitkind, ResumeKind
 
 
 class ThreadInfo(object):
+    """ Represents a thread. """
+
     def __init__(self, ptid):
         self.id = ptid
-        self.thread_data = None
+        self.target_data = None
         self.regcache_data = None
         self.last_resume_kind = None
         self.last_status = None
@@ -37,3 +39,40 @@ class ThreadInfo(object):
     def is_status_pending(self):
         """ If the thread might have an event to report. """
         return self.status_pending_p
+
+
+class ThreadList(object):
+    """ Represents a list of threads, should be created once per server. """
+
+    def __init__(self):
+        self.all_threads = []
+        self.current_thread = None
+
+    def add_thread(self, thread_id, target_data=""):
+        """
+        Add new thread to all threads.
+        :param Ptid thread_id: Thread's id.
+        :param str target_data: Target's data.
+        :return: New thread.
+        :rtype: ThreadInfo
+        """
+        new_thread = ThreadInfo(thread_id)
+        new_thread.last_resume_kind = ResumeKind.RESUME_CONTINUE
+        new_thread.last_status.kind = TargetWaitkind.IGNORE
+        self.all_threads.append(new_thread)
+        if self.current_thread is None:
+            self.current_thread = new_thread
+        new_thread.target_data = target_data
+        return new_thread
+
+    def find_thread(self, ptid):
+        """
+        Find a thread by matching `ptid`.
+        :param Ptid ptid: Thread's id.
+        :return: Existing thread with matching id.
+        :rtype: ThreadInfo
+        """
+        try:
+            return filter(lambda thread: thread.id == ptid, self.all_threads)[0]
+        except IndexError:
+            return None
