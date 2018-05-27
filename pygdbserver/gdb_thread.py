@@ -1,4 +1,6 @@
 # coding=utf-8
+from contextlib import contextmanager
+from pygdbserver.ptid import Ptid
 from pygdbserver.signals import GdbSignal
 from pygdbserver.gdb_enums import TargetWaitkind, ResumeKind
 
@@ -46,7 +48,20 @@ class ThreadList(object):
 
     def __init__(self):
         self.all_threads = []
-        self.current_thread = None
+        self.current_thread = ThreadInfo(Ptid.null_ptid())
+
+    @contextmanager
+    def replace_current_thread(self, new_thread):
+        """
+        Replaces the current thread for this context.
+        :param ThreadInfo new_thread: Thread to replace the current with.
+        """
+        saved_thread = self.current_thread
+        self.current_thread = new_thread
+        try:
+            yield
+        finally:
+            self.current_thread = saved_thread
 
     def add_thread(self, thread_id, target_data=""):
         """
