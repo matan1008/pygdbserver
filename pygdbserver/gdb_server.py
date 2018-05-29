@@ -7,7 +7,7 @@ import logging
 from pygdbserver.ptid import Ptid
 from pygdbserver.regcache import Regcache
 from pygdbserver.target_desc import TargetDesc
-from pygdbserver.process_info import ProcessInfo
+from pygdbserver.gdb_process import ProcessInfo
 from pygdbserver.gdb_thread import ThreadInfo, ThreadList
 from pygdbserver.target_waitstatus import TargetWaitStatus
 from pygdbserver.signals import GdbSignal, gdb_signal_to_host, gdb_signal_to_name
