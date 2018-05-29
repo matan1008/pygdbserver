@@ -4,11 +4,11 @@ import sys
 import signal
 import atexit
 import logging
-from contextlib import contextmanager
 from pygdbserver.ptid import Ptid
 from pygdbserver.regcache import Regcache
-from pygdbserver.thread_info import ThreadInfo
+from pygdbserver.target_desc import TargetDesc
 from pygdbserver.process_info import ProcessInfo
+from pygdbserver.gdb_thread import ThreadInfo, ThreadList
 from pygdbserver.target_waitstatus import TargetWaitStatus
 from pygdbserver.signals import GdbSignal, gdb_signal_to_host, gdb_signal_to_name
 from pygdbserver.gdb_enums import *
@@ -20,6 +20,7 @@ class GdbServer(object):
         if logger is None:
             logging.basicConfig()
             self.logger = logging.getLogger("gdbserver")
+            self.logger.setLevel(logging.DEBUG)
         else:
             self.logger = logger
         self.target = target
@@ -30,14 +31,13 @@ class GdbServer(object):
         }
 
         self.all_processes = []
-        self.all_threads = []
+        self.all_threads = ThreadList()
         self.extended_protocol = False
         self.non_stop = False
         self.last_status = TargetWaitStatus()
         self.last_ptid = None
         self.cont_thread = None
         self.general_thread = None
-        self.current_thread = None
         self.saved_thread = None
         self.disable_packet_v_cont = False
         self.v_cont_supported = True
@@ -100,52 +100,23 @@ class GdbServer(object):
         """
         return "${}#{:02X}".format(packet_data, GdbServer.calc_checksum(packet_data))
 
-    @contextmanager
-    def replace_current_thread(self, new_thread):
-        """
-        Replaces the current thread for this context.
-        :param ThreadInfo new_thread: Thread to replace the current with.
-        """
-        saved_thread = self.current_thread
-        self.current_thread = new_thread
-        try:
-            yield
-        finally:
-            self.current_thread = saved_thread
-
-    @staticmethod
-    def find_inferior_by_ptid(ptid, inferiors_list):
-        try:
-            return filter(lambda inf: inf.id == ptid, inferiors_list)[0]
-        except IndexError:
-            return None
-
     def find_process(self, ptid):
         """
         Find a process_info by matching `ptid`.
         :param Ptid ptid:
         :rtype: ProcessInfo
         """
-        return self.find_inferior_by_ptid(ptid, self.all_processes)
-
-    def find_thread(self, ptid):
-        """ Find a thread_info by matching `ptid`. """
-        return self.find_inferior_by_ptid(ptid, self.all_threads)
+        try:
+            return filter(lambda inf: inf.id == ptid, self.all_processes)[0]
+        except IndexError:
+            return None
 
     def set_desired_thread(self, use_general):
         if use_general:
-            self.current_thread = self.find_thread(self.general_thread)
+            self.all_threads.current_thread = self.all_threads.find_thread(self.general_thread)
         else:
-            self.current_thread = self.find_thread(self.cont_thread)
-        return self.current_thread is not None
-
-    def target_running(self):
-        """
-        Check if any threads are running.
-        :return: If any threads are running.
-        :rtype: bool
-        """
-        return bool(self.all_threads)
+            self.all_threads.current_thread = self.all_threads.find_thread(self.cont_thread)
+        return self.all_threads.current_thread is not None
 
     def current_process(self):
         """
@@ -153,8 +124,18 @@ class GdbServer(object):
         :return: Current process.
         :rtype: ProcessInfo
         """
-        assert self.current_thread is not None
-        return self.find_process(self.current_thread.id.pid_to_ptid())
+        assert self.all_threads.current_thread is not None
+        return self.find_process(self.all_threads.current_thread.id.pid_to_ptid())
+
+    def current_target_desc(self):
+        """
+        Get the current target description.
+        :return: Current target description.
+        :rtype: TargetDesc
+        """
+        if self.all_threads.current_thread is None:
+            return TargetDesc([], 0, [], "")
+        return self.current_process().tdesc
 
     def get_thread_regcache(self, thread, fetch):
         """
@@ -169,7 +150,7 @@ class GdbServer(object):
             assert proc.tdesc is not None and proc.tdesc.registers_size != 0
             thread.regcache_data = Regcache(proc.tdesc)
         if fetch and not thread.regcache_data.registers_valid:
-            with self.replace_current_thread(thread):
+            with self.all_threads.replace_current_thread(thread):
                 thread.regcache_data.invalidate_registers()
                 self.target.fetch_registers(thread.regcache_data, -1)
             thread.regcache_data.registers_valid = True
@@ -199,7 +180,7 @@ class GdbServer(object):
             event = "syscall_entry" if status.kind is TargetWaitkind.SYSCALL_ENTRY else "syscall_return"
             return "T{:02x}{}:{:x};".format(GdbSignal.GDB_SIGNAL_TRAP, event, status.syscall_number)
         else:
-            return "T{:02x}".format(status.sig)
+            return "T{:02x}".format(status.sig.value)
 
     def prepare_status_independent_resume_reply(self, ptid):
         """
@@ -209,8 +190,8 @@ class GdbServer(object):
         :rtype: str
         """
         resp = ""
-        expedite_regs = self.current_process().tdesc.expedite_regs if self.current_process() is not None else []
-        regcache = self.get_thread_regcache(self.current_thread, True)
+        expedite_regs = self.current_target_desc().expedite_regs
+        regcache = self.get_thread_regcache(self.all_threads.current_thread, True)
         if self.target.stopped_by_watchpoint():
             resp += "watch:{:08x};".format(self.target.stopped_data_address())
         elif self.swbreak_feature and self.target.stopped_by_sw_breakpoint():
@@ -246,14 +227,14 @@ class GdbServer(object):
                 TargetWaitkind.EXECD, TargetWaitkind.THREAD_CREATED, TargetWaitkind.SYSCALL_ENTRY,
                 TargetWaitkind.SYSCALL_RETURN):
             resp = self.prepare_thread_status_change_reply(status)
-            with self.replace_current_thread(self.find_thread(ptid)):
+            with self.all_threads.replace_current_thread(self.all_threads.find_thread(ptid)):
                 resp += self.prepare_status_independent_resume_reply(ptid)
         elif status.kind is TargetWaitkind.EXITED:
             resp = "W{:x};process:{:x}".format(status.integer, ptid.pid) if self.multi_process else "W{:02x}".format(
                 status.integer)
         elif status.kind is TargetWaitkind.SIGNALLED:
-            resp = "X{:x};process:{:x}".format(status.sig, ptid.pid) if self.multi_process else "X{:02x}".format(
-                status.sig)
+            resp = "X{:x};process:{:x}".format(status.sig.value, ptid.pid) if self.multi_process else "X{:02x}".format(
+                status.sig.value)
         elif status.kind is TargetWaitkind.THREAD_EXITED:
             resp = "w{:x};{}".format(status.integer, ptid.write_ptid(self.multi_process))
         elif status.kind is TargetWaitkind.NO_RESUMED:
@@ -280,7 +261,7 @@ class GdbServer(object):
             thread = None
             # Prefer the last thread that reported an event to GDB (even if that was a GDB_SIGNAL_TRAP).
             if self.last_status.kind not in (TargetWaitkind.IGNORE, TargetWaitkind.EXITED, TargetWaitkind.SIGNALLED):
-                thread = self.find_thread(self.last_ptid)
+                thread = self.all_threads.find_thread(self.last_ptid)
             # If the last event thread is not found for some reason,
             # look for some other thread that might have an event to report.
             if thread is None:
@@ -288,7 +269,7 @@ class GdbServer(object):
                 thread = pending_threads[0] if pending_threads else None
             # If we're still out of luck, simply pick the first thread in the thread list.
             if thread is None:
-                thread = self.all_threads[0] if self.all_threads else None
+                thread = self.all_threads.get_first()
             if thread is not None:
                 thread.status_pending_p = False
                 self.general_thread = thread.id
@@ -330,7 +311,7 @@ class GdbServer(object):
         :rtype: int
         """
         new_argv = self.wrapper_argv + argv
-        map(lambda i, arg: self.logger.debug("new_argv[%d] = \"%s\"\n", i, arg), enumerate(new_argv))
+        map(lambda en: self.logger.debug("new_argv[%d] = \"%s\"\n", en[0], en[1]), list(enumerate(new_argv)))
         if hasattr(signal, "SIGTTOU") and hasattr(signal, "SIGTTIN"):
             signal.signal(signal.SIGTTOU, signal.SIG_DFL)
             signal.signal(signal.SIGTTIN, signal.SIG_DFL)
@@ -350,16 +331,16 @@ class GdbServer(object):
                 self.last_ptid = self.my_wait(Ptid.from_pid(signal_pid), self.last_status, 0, False)
                 if self.last_status.kind is not TargetWaitkind.STOPPED:
                     break
-                self.current_thread.last_resume_kind = ResumeKind.RESUME_STOP
-                self.current_thread.last_status = self.last_status
+                self.all_threads.current_thread.last_resume_kind = ResumeKind.RESUME_STOP
+                self.all_threads.current_thread.last_status = self.last_status
                 condition = self.last_status.sig != GdbSignal.GDB_SIGNAL_TRAP
             self.target.post_create_inferior()
             return signal_pid
         self.last_ptid = self.my_wait(Ptid.from_pid(signal_pid), self.last_status, 0, False)
         if self.last_status.kind not in (TargetWaitkind.EXITED, TargetWaitkind.SIGNALLED):
             self.target.post_create_inferior()
-            self.current_thread.last_resume_kind = ResumeKind.RESUME_STOP
-            self.current_thread.last_status = self.last_status
+            self.all_threads.current_thread.last_resume_kind = ResumeKind.RESUME_STOP
+            self.all_threads.current_thread.last_status = self.last_status
         else:
             self.target.mourn(self.find_process(self.last_ptid.pid_to_ptid()))
         return signal_pid
@@ -405,7 +386,7 @@ class GdbServer(object):
         if data.startswith("vAttach;"):
             pass
         if data.startswith("vRun;"):
-            if (not self.extended_protocol or not self.multi_process) and self.target_running():
+            if (not self.extended_protocol or not self.multi_process) and self.all_threads.target_running():
                 self.logger.info("Already debugging a process\n")
                 return self.write_enn()
             return self.handle_v_run(data)

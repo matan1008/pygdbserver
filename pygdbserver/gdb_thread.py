@@ -1,4 +1,7 @@
 # coding=utf-8
+"""
+All code required for managing threads.
+"""
 from contextlib import contextmanager
 from pygdbserver.ptid import Ptid
 from pygdbserver.signals import GdbSignal
@@ -48,7 +51,10 @@ class ThreadList(object):
 
     def __init__(self):
         self.all_threads = []
-        self.current_thread = ThreadInfo(Ptid.null_ptid())
+        self.current_thread = None
+
+    def __iter__(self):
+        return self.all_threads.__iter__()
 
     @contextmanager
     def replace_current_thread(self, new_thread):
@@ -99,3 +105,11 @@ class ThreadList(object):
             return filter(lambda thread: thread.id == ptid, self.all_threads)[0]
         except IndexError:
             return None
+
+    def get_first(self):
+        """
+        Gets the first thread.
+        :return: First thread in the list or `None` if not threads are reported.
+        :rtype: ThreadInfo
+        """
+        return self.all_threads[0] if self.all_threads else None
