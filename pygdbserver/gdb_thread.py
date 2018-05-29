@@ -110,6 +110,6 @@ class ThreadList(object):
         """
         Gets the first thread.
         :return: First thread in the list or `None` if not threads are reported.
-        :rtype: ThreadInfo
+        :rtype: ThreadInfo or None
         """
         return self.all_threads[0] if self.all_threads else None

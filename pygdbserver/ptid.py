@@ -35,6 +35,12 @@ class Ptid(object):
 
     @staticmethod
     def from_pid(pid):
+        """
+        Make a new Ptid object from process id.
+        :param int pid: Process's id.
+        :return: new ptid.
+        :rtype: Ptid
+        """
         return Ptid(pid, None, None).pid_to_ptid()
 
     @staticmethod

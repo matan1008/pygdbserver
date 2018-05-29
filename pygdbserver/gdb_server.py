@@ -7,9 +7,9 @@ import logging
 from pygdbserver.ptid import Ptid
 from pygdbserver.regcache import Regcache
 from pygdbserver.target_desc import TargetDesc
-from pygdbserver.gdb_process import ProcessInfo
 from pygdbserver.gdb_thread import ThreadInfo, ThreadList
 from pygdbserver.target_waitstatus import TargetWaitStatus
+from pygdbserver.gdb_process import ProcessInfo, ProcessList
 from pygdbserver.signals import GdbSignal, gdb_signal_to_host, gdb_signal_to_name
 from pygdbserver.gdb_enums import *
 from pygdbserver.pygdbserver_exceptions import *
@@ -30,7 +30,7 @@ class GdbServer(object):
             "v": self.handle_v_requests,
         }
 
-        self.all_processes = []
+        self.all_processes = ProcessList()
         self.all_threads = ThreadList()
         self.extended_protocol = False
         self.non_stop = False
@@ -100,17 +100,6 @@ class GdbServer(object):
         """
         return "${}#{:02X}".format(packet_data, GdbServer.calc_checksum(packet_data))
 
-    def find_process(self, ptid):
-        """
-        Find a process_info by matching `ptid`.
-        :param Ptid ptid:
-        :rtype: ProcessInfo
-        """
-        try:
-            return filter(lambda inf: inf.id == ptid, self.all_processes)[0]
-        except IndexError:
-            return None
-
     def set_desired_thread(self, use_general):
         if use_general:
             self.all_threads.current_thread = self.all_threads.find_thread(self.general_thread)
@@ -125,7 +114,7 @@ class GdbServer(object):
         :rtype: ProcessInfo
         """
         assert self.all_threads.current_thread is not None
-        return self.find_process(self.all_threads.current_thread.id.pid_to_ptid())
+        return self.all_processes.find_process(self.all_threads.current_thread.id.pid_to_ptid())
 
     def current_target_desc(self):
         """
@@ -146,7 +135,7 @@ class GdbServer(object):
         :rtype: Regcache
         """
         if thread.regcache_data is None:
-            proc = self.find_process(thread.id.pid_to_ptid())
+            proc = self.all_processes.find_process(thread.id.pid_to_ptid())
             assert proc.tdesc is not None and proc.tdesc.registers_size != 0
             thread.regcache_data = Regcache(proc.tdesc)
         if fetch and not thread.regcache_data.registers_valid:
@@ -342,7 +331,7 @@ class GdbServer(object):
             self.all_threads.current_thread.last_resume_kind = ResumeKind.RESUME_STOP
             self.all_threads.current_thread.last_status = self.last_status
         else:
-            self.target.mourn(self.find_process(self.last_ptid.pid_to_ptid()))
+            self.target.mourn(self.all_processes.find_process(self.last_ptid.pid_to_ptid()))
         return signal_pid
 
     def handle_v_run(self, data):
