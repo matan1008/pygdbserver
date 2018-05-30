@@ -9,11 +9,16 @@ class Target:
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def create_inferior(self, program, args):
+    def create_inferior(self, program, args, add_process, add_thread):
         """
         Start a new process and registers the new process with the process list.
+        Adding the process and it's threads should be done with add_process and add_thread.
+        It is recommended to fill the process's `tdesc` field (the process is returned from add_process)
+        with a `TargetDesc` object.
         :param str program: A path to the program to execute.
         :param list(str) args: An array of arguments, to be passed to the inferior as ``argv''.
+        :param function(int, bool) add_process: `add_process(pid, attached)`, The function returns ProcessInfo.
+        :param function(Ptid, str) add_thread: `add_thread(ptid, target_data=""])`, The function returns ThreadInfo.
         :return: The new PID on success.
         :rtype: int.
         :raises TargetCreatingInferiorError: If creating process failed.

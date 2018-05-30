@@ -2,9 +2,10 @@
 """
 All code required for managing threads.
 """
-from contextlib import contextmanager
 from pygdbserver.ptid import Ptid
+from contextlib import contextmanager
 from pygdbserver.signals import GdbSignal
+from pygdbserver.target_waitstatus import TargetWaitStatus
 from pygdbserver.gdb_enums import TargetWaitkind, ResumeKind
 
 
@@ -16,7 +17,7 @@ class ThreadInfo(object):
         self.target_data = None
         self.regcache_data = None
         self.last_resume_kind = None
-        self.last_status = None
+        self.last_status = TargetWaitStatus()
         self.status_pending_p = True
         self.while_stepping = []
         self.btrace = None

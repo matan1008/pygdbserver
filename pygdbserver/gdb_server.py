@@ -210,7 +210,7 @@ class GdbServer(object):
         :return: Resume reply.
         :rtype: str
         """
-        self.logger.debug("Writing resume reply for %s:%d\n", str(ptid), status.kind)
+        self.logger.debug("Writing resume reply for %s:%d\n", str(ptid), status.kind.value)
         if status.kind in (
                 TargetWaitkind.STOPPED, TargetWaitkind.FORKED, TargetWaitkind.VFORKED, TargetWaitkind.VFORK_DONE,
                 TargetWaitkind.EXECD, TargetWaitkind.THREAD_CREATED, TargetWaitkind.SYSCALL_ENTRY,
@@ -304,7 +304,7 @@ class GdbServer(object):
         if hasattr(signal, "SIGTTOU") and hasattr(signal, "SIGTTIN"):
             signal.signal(signal.SIGTTOU, signal.SIG_DFL)
             signal.signal(signal.SIGTTIN, signal.SIG_DFL)
-        signal_pid = self.target.create_inferior(new_argv[0], new_argv)
+        signal_pid = self.target.create_inferior(new_argv[0], new_argv, self.all_processes.add_process, self.all_threads.add_thread)
         self.logger.error("Process %s created; pid = %ld\n", argv[0], signal_pid)
         if hasattr(signal, "SIGTTOU") and hasattr(signal, "SIGTTIN"):
             signal.signal(signal.SIGTTOU, signal.SIG_IGN)
