@@ -209,3 +209,8 @@ class GdbUnknownSignal(PyGdbServerException):
 class UnhandledWaitkindError(PyGdbServerException):
     """ For when `prepare_resume_reply` fails to handle status kind. """
     pass
+
+
+class VcontActionDecodingError(PyGdbServerException):
+    """ For when `ThreadResume.from_vcont` fails to decode an action. """
+    pass

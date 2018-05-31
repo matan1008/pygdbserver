@@ -46,6 +46,15 @@ class ThreadInfo(object):
         """ If the thread might have an event to report. """
         return self.status_pending_p
 
+    def is_applied_to(self, ptid):
+        """
+        Returns True if `ptid` applies to current thread.
+        :param Ptid ptid: Thread's id.
+        :return: If `ptid` applies to current thread.
+        :rtype: bool
+        """
+        return self.id == ptid or (ptid.pid_to_ptid() == self.id.pid_to_ptid() and ptid.lwp == -1)
+
 
 class ThreadList(object):
     """ Represents a list of threads, should be created once per server. """

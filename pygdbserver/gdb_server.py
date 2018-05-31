@@ -7,6 +7,7 @@ import logging
 from pygdbserver.ptid import Ptid
 from pygdbserver.regcache import Regcache
 from pygdbserver.target_desc import TargetDesc
+from pygdbserver.thread_resume import ThreadResume
 from pygdbserver.gdb_thread import ThreadInfo, ThreadList
 from pygdbserver.target_waitstatus import TargetWaitStatus
 from pygdbserver.gdb_process import ProcessInfo, ProcessList
@@ -46,6 +47,7 @@ class GdbServer(object):
         self.report_vfork_events = False
         self.report_exec_events = False
         self.report_thread_events = False
+        self.report_no_resumed = False
         self.swbreak_feature = False
         self.hwbreak_feature = False
         self.using_threads = False
@@ -304,7 +306,8 @@ class GdbServer(object):
         if hasattr(signal, "SIGTTOU") and hasattr(signal, "SIGTTIN"):
             signal.signal(signal.SIGTTOU, signal.SIG_DFL)
             signal.signal(signal.SIGTTIN, signal.SIG_DFL)
-        signal_pid = self.target.create_inferior(new_argv[0], new_argv, self.all_processes.add_process, self.all_threads.add_thread)
+        signal_pid = self.target.create_inferior(new_argv[0], new_argv, self.all_processes.add_process,
+                                                 self.all_threads.add_thread)
         self.logger.error("Process %s created; pid = %ld\n", argv[0], signal_pid)
         if hasattr(signal, "SIGTTOU") and hasattr(signal, "SIGTTIN"):
             signal.signal(signal.SIGTTOU, signal.SIG_IGN)
@@ -334,6 +337,47 @@ class GdbServer(object):
             self.target.mourn(self.all_processes.find_process(self.last_ptid.pid_to_ptid()))
         return signal_pid
 
+    def resume(self, actions):
+        """
+        Resume target with `actions`.
+        :param list(ThreadResume) actions: Actions to resume with.
+        :return: resume status.
+        :rtype: str
+        """
+        if not self.non_stop:
+            for thread in self.all_threads:
+                for action in actions:
+                    if thread.is_applied_to(action.thread):
+                        if thread.status_pending_p:
+                            thread.status_pending_p = False
+                            self.last_status = thread.last_status
+                            self.last_ptid = thread.id
+                            return self.prepare_resume_reply(self.last_ptid, self.last_status)
+            # TODO: enable_async_io
+        self.target.resume(actions)
+        if self.non_stop:
+            return self.write_ok()
+        self.last_ptid = self.my_wait(Ptid.minus_one_ptid(), self.last_status, 0, True)
+        if self.last_status.kind is TargetWaitkind.NO_RESUMED and not self.report_no_resumed:
+            # TODO: disable_async_io
+            return "E.No unwaited-for children left."
+        if self.last_status.kind not in (TargetWaitkind.EXITED, TargetWaitkind.SIGNALLED, TargetWaitkind.NO_RESUMED):
+            self.all_threads.current_thread.last_status = self.last_status
+        map(ThreadInfo.gdb_wants_thread_stopped, self.all_threads)
+        resp = self.prepare_resume_reply(self.last_ptid, self.last_status)
+        # TODO: disable_async_io
+        if self.last_status.kind in (TargetWaitkind.EXITED, TargetWaitkind.SIGNALLED):
+            self.target.mourn(self.all_processes.find_process(self.last_ptid.pid_to_ptid()))
+        return resp
+
+    def handle_v_cont(self, data):
+        """ Parse vCont packets. """
+        try:
+            actions = map(ThreadResume.from_vcont, data[5:].split(";"))
+        except VcontActionDecodingError:
+            return self.write_enn()
+        return self.resume(actions)
+
     def handle_v_run(self, data):
         """ Run a new program. """
         new_argv = data[len("vRun;"):].split(";")
@@ -361,7 +405,7 @@ class GdbServer(object):
                 self.target.request_interrupt()
                 return self.write_ok()
             elif data.startswith("vCont;"):
-                pass
+                return self.handle_v_cont(data)
             elif data.startswith("vCont?"):
                 res = "vCont;c;C;t"
                 if self.target.supports_hardware_single_step() or \
