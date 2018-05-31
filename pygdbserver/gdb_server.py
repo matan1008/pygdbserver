@@ -56,6 +56,7 @@ class GdbServer(object):
         self.program_argv = []
         self.wrapper_argv = []
         self.server_waiting = False
+        self.signal_pid = 0
 
     @staticmethod
     def write_ok():
@@ -378,6 +379,39 @@ class GdbServer(object):
             return self.write_enn()
         return self.resume(actions)
 
+    def attach_inferior(self, pid):
+        """
+        Attach to an inferior.
+        :param int pid: Inferior's id.
+        :return: True if attaching succeeded.
+        :rtype: bool
+        """
+        try:
+            self.target.attach(pid, self.all_processes.add_process, self.all_threads.add_thread)
+        except (TargetAttachError, TargetAttachNotSupported):
+            return False
+        self.logger.error("Attached; pid = %d", pid)
+        self.signal_pid = pid
+        if not self.non_stop:
+            self.last_ptid = self.my_wait(Ptid.from_pid(pid), self.last_status, 0, False)
+            if self.last_status.kind is TargetWaitkind.STOPPED and self.last_status.sig is GdbSignal.GDB_SIGNAL_STOP:
+                self.last_status.sig = GdbSignal.GDB_SIGNAL_TRAP
+            self.all_threads.current_thread.last_resume_kind = ResumeKind.RESUME_STOP
+            self.all_threads.current_thread.last_status = self.last_status
+        return True
+
+    def handle_v_attach(self, data):
+        """ Attach to a new program. """
+        pid = int(data[8:], 16)
+        if pid != 0 and self.attach_inferior(pid):
+            self.dll_changed = False
+            if self.non_stop:
+                return self.write_ok()
+            else:
+                return self.prepare_resume_reply(self.last_ptid, self.last_status)
+        else:
+            return self.write_enn()
+
     def handle_v_run(self, data):
         """ Run a new program. """
         new_argv = data[len("vRun;"):].split(";")
@@ -417,7 +451,7 @@ class GdbServer(object):
         if data.startswith("vFile:"):
             pass
         if data.startswith("vAttach;"):
-            pass
+            return self.handle_v_attach(data)
         if data.startswith("vRun;"):
             if (not self.extended_protocol or not self.multi_process) and self.all_threads.target_running():
                 self.logger.info("Already debugging a process\n")

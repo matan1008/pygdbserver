@@ -33,10 +33,15 @@ class Target:
         raise NotImplementedError()
 
     @abstractmethod
-    def attach(self, pid):
+    def attach(self, pid, add_process, add_thread):
         """
         Attach to a running process.
+        Attaching the process and it's threads should be done with add_process and add_thread.
+        It is recommended to fill the process's `tdesc` field (the process is returned from add_process)
+        with a `TargetDesc` object.
         :param int pid: The process ID to attach to, specified by the user or a higher layer.
+        :param function(int, bool) add_process: `add_process(pid, attached)`, The function returns ProcessInfo.
+        :param function(Ptid, str) add_thread: `add_thread(ptid, target_data=""])`, The function returns ThreadInfo.
         :raises TargetAttachError: If attaching failed.
         :raises TargetAttachNotSupported: If attaching is unsupported.
         """
