@@ -43,6 +43,7 @@ class GdbServer(object):
         self.saved_thread = None
         self.disable_packet_v_cont = False
         self.disable_packet_qc = False
+        self.disable_packet_qf_thread_info = False
         self.v_cont_supported = True
         self.multi_process = False
         self.report_fork_events = False
@@ -59,6 +60,7 @@ class GdbServer(object):
         self.wrapper_argv = []
         self.server_waiting = False
         self.signal_pid = 0
+        self.thread_iterator = iter(self.all_threads)
 
     @staticmethod
     def write_ok():
@@ -504,6 +506,19 @@ class GdbServer(object):
             else:
                 gdb_id = self.all_threads.get_first().id
             return "QC{}".format(gdb_id.write_ptid(self.multi_process))
+        if data == "qSymbol::":
+            # TODO: Handle qSymbol request
+            return ""
+        if not self.disable_packet_qf_thread_info:
+            if data in ("qfThreadInfo", "qsThreadInfo"):
+                if not self.all_threads.target_running():
+                    return self.write_enn()
+                if "qfThreadInfo" == data:
+                    self.thread_iterator = iter(self.all_threads)
+                try:
+                    return "m{}".format(self.thread_iterator.next().id.write_ptid(self.multi_process))
+                except StopIteration:
+                    return "l"
 
     def process_packet(self, data):
         """
