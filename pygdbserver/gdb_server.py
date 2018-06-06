@@ -429,6 +429,14 @@ class GdbServer(object):
         else:
             return self.write_enn()
 
+    def kill_inferior(self, pid):
+        """
+        Kill an inferior.
+        :param int pid: Inferior's id.
+        """
+        # TODO: gdb_agent_about_to_close(pid)
+        return self.target.kill(pid)
+
     def handle_v_kill(self, data):
         """ Kill process. """
         if self.multi_process:
@@ -483,7 +491,6 @@ class GdbServer(object):
                 self.logger.error("No process to kill\n")
                 return self.write_enn()
             return self.handle_v_kill(data)
-
 
     def process_packet(self, data):
         """
