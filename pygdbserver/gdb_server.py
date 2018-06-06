@@ -429,6 +429,26 @@ class GdbServer(object):
         else:
             return self.write_enn()
 
+    def handle_v_kill(self, data):
+        """ Kill process. """
+        if self.multi_process:
+            pid = int(data[6:], 16)
+        else:
+            pid = self.signal_pid
+        if pid != 0:
+            try:
+                self.kill_inferior(pid)
+            except TargetKillError:
+                return self.write_enn()
+            else:
+                self.last_status.kind = TargetWaitkind.SIGNALLED
+                self.last_status.sig = GdbSignal.GDB_SIGNAL_KILL
+                self.last_ptid = Ptid.from_pid(pid)
+                # TODO: discard_queued_stop_replies(last_ptid)
+                return self.write_ok()
+        else:
+            return self.write_enn()
+
     def handle_v_requests(self, data):
         """
         Handle all of the extended 'v' packets.
@@ -449,14 +469,21 @@ class GdbServer(object):
                     res += ";r"
                 return res
         if data.startswith("vFile:"):
+            # TODO: return handle_v_file(data)
             pass
         if data.startswith("vAttach;"):
             return self.handle_v_attach(data)
         if data.startswith("vRun;"):
             if (not self.extended_protocol or not self.multi_process) and self.all_threads.target_running():
-                self.logger.info("Already debugging a process\n")
+                self.logger.error("Already debugging a process\n")
                 return self.write_enn()
             return self.handle_v_run(data)
+        if data.startswith("vKill;"):
+            if not self.all_threads.target_running():
+                self.logger.error("No process to kill\n")
+                return self.write_enn()
+            return self.handle_v_kill(data)
+
 
     def process_packet(self, data):
         """
