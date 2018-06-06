@@ -29,6 +29,7 @@ class GdbServer(object):
             "!": self.handle_extend_protocol,
             "?": self.handle_status,
             "v": self.handle_v_requests,
+            "q": self.handle_query,
         }
 
         self.all_processes = ProcessList()
@@ -38,9 +39,10 @@ class GdbServer(object):
         self.last_status = TargetWaitStatus()
         self.last_ptid = None
         self.cont_thread = None
-        self.general_thread = None
+        self.general_thread = Ptid.null_ptid()
         self.saved_thread = None
         self.disable_packet_v_cont = False
+        self.disable_packet_qc = False
         self.v_cont_supported = True
         self.multi_process = False
         self.report_fork_events = False
@@ -491,6 +493,17 @@ class GdbServer(object):
                 self.logger.error("No process to kill\n")
                 return self.write_enn()
             return self.handle_v_kill(data)
+
+    def handle_query(self, data):
+        """ Handle all of the extended 'q' packets. """
+        if data == "qC" and not self.disable_packet_qc:
+            if not self.all_threads.target_running():
+                return self.write_enn()
+            if self.general_thread not in (Ptid.minus_one_ptid(), Ptid.null_ptid()):
+                gdb_id = self.general_thread
+            else:
+                gdb_id = self.all_threads.get_first().id
+            return "QC{}".format(gdb_id.write_ptid(self.multi_process))
 
     def process_packet(self, data):
         """
